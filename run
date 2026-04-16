@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+FRONTEND_DIR="$ROOT_DIR/frontend"
+NODE_BIN_DIR="/home/sabastian/.local/node/bin"
+
+if [ -d "$NODE_BIN_DIR" ]; then
+	export PATH="$NODE_BIN_DIR:$PATH"
+fi
+
+need_cmd() {
+	if ! command -v "$1" >/dev/null 2>&1; then
+		echo "Error: required command '$1' is not available in PATH."
+		exit 1
+	fi
+}
+
+NPM_CMD="$NODE_BIN_DIR/npm"
+NODE_CMD="$NODE_BIN_DIR/node"
+
+if [ ! -x "$NPM_CMD" ]; then
+	need_cmd npm
+	NPM_CMD="$(command -v npm)"
+fi
+
+if [ ! -x "$NODE_CMD" ]; then
+	need_cmd node
+	NODE_CMD="$(command -v node)"
+fi
+
+cd "$FRONTEND_DIR"
+
+# Clear stale LinuxCAD instances that may hold the single-instance lock
+# without an accessible window.
+pkill -f "node scripts/electron-dev.cjs" 2>/dev/null || true
+pkill -f "node_modules/electron/dist/electron" 2>/dev/null || true
+pkill -f "backend-rust/target/debug/server" 2>/dev/null || true
+
+if [ ! -d node_modules ]; then
+	echo "Installing frontend dependencies..."
+	"$NPM_CMD" install
+fi
+
+MODE="${1:-}" 
+if [ "$MODE" = "--safe" ]; then
+	echo "Launching LinuxCAD desktop software (safe software-render mode)..."
+	"$NPM_CMD" run electron:software:safe
+else
+	echo "Launching LinuxCAD desktop software (hardware acceleration mode)..."
+	"$NPM_CMD" run electron:software
+fi

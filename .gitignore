@@ -1,0 +1,81 @@
+# Rust/Cargo (backend-rust)
+backend-rust/target/
+backend-rust/Cargo.lock
+Cargo.lock
+*.rlib
+*.rmeta
+*.so
+*.dylib
+*.dll
+
+# QML/CMake (frontend-qml)
+frontend-qml/build/
+frontend-qml/build-*/
+frontend-qml/CMakeFiles/
+frontend-qml/cmake_install.cmake
+frontend-qml/CMakeCache.txt
+frontend-qml/**/*.o
+frontend-qml/**/Makefile
+frontend-qml/**/*.cmake
+
+# Qt generated files
+*_qmltyperegistrations.cpp
+moc_*.cpp
+moc_*.h
+ui_*.h
+*.qmltypes
+qmldir
+
+# Frontend Rust (if applicable)
+frontend-rust/target/
+frontend-rust/Cargo.lock
+
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Build and runtime
+*.o
+*.a
+*.lo
+*.la
+*.so.*
+*.exe
+*.app
+*.deb
+*.rpm
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+node_modules/
+.node_modules/
+
+# Debug outputs
+*.log
+debug/
+.debug

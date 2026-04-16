@@ -1,0 +1,115 @@
+name: Release Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (for example v0.3.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+            buildScript: electron:build:linux
+            artifactPath: |
+              frontend/release/*.AppImage
+              frontend/release/*.deb
+          - name: macOS
+            os: macos-latest
+            buildScript: electron:build:mac
+            artifactPath: |
+              frontend/release/*-mac-*.dmg
+              frontend/release/*-mac-*.zip
+          - name: Windows
+            os: windows-latest
+            buildScript: electron:build:win
+            artifactPath: |
+              frontend/release/*-win-*.exe
+              frontend/release/*-win-*.zip
+
+    env:
+      CI: true
+      CSC_IDENTITY_AUTO_DISCOVERY: false
+      ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Rust backend
+        working-directory: backend-rust
+        run: cargo build --release
+
+      - name: Build desktop package
+        working-directory: frontend
+        run: npm run ${{ matrix.buildScript }}
+
+      - name: Upload packaged artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linuxcad-${{ matrix.name }}
+          path: ${{ matrix.artifactPath }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-artifacts
+
+      - name: Flatten assets
+        run: |
+          mkdir -p release-assets
+          find dist-artifacts -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' -o -name '*.zip' -o -name '*.exe' \) -exec cp {} release-assets/ \;
+          ls -lah release-assets
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.value }}
+          generate_release_notes: true
+          make_latest: true
+          files: release-assets/*
