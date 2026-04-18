@@ -71,6 +71,12 @@ jobs:
         working-directory: backend-rust
         run: cargo build --release
 
+      - name: Signing placeholders
+        shell: bash
+        run: |
+          echo "Optional signing/notarization placeholders are documented in RELEASES.md."
+          echo "When secrets are configured in repository settings, electron-builder will use them during release packaging."
+
       - name: Build desktop package
         working-directory: frontend
         run: npm run ${{ matrix.buildScript }}

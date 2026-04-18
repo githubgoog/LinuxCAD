@@ -38,4 +38,21 @@ git push origin v0.4.0
 ## Packaging notes
 - Rust backend is built per runner OS (`cargo build --release`) in CI.
 - Electron bundle includes backend executable in app resources as `backend/server` or `backend/server.exe`.
-- macOS signing/notarization is not configured yet. Current builds are unsigned test builds.
+
+## Signing and notarization setup
+Release workflow supports optional signing via GitHub Secrets. If secrets are absent, builds still complete as unsigned artifacts.
+
+### macOS signing and notarization secrets
+- `APPLE_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
+- `APPLE_TEAM_ID`
+
+### Windows signing secrets
+- `CSC_LINK`
+- `CSC_KEY_PASSWORD`
+
+`CSC_LINK` should point to your signing certificate in a format supported by electron-builder (commonly a base64-encoded `p12` payload).
+
+### Verification behavior
+- When secrets exist, CI logs indicate signing/notarization is enabled for that platform.
+- When missing, CI logs indicate unsigned fallback and continue publishing artifacts.

@@ -25,6 +25,8 @@ LinuxCAD is a desktop CAD application powered by Electron (frontend) and Rust (g
 - macOS: dmg and zip builds in CI.
 - Windows: nsis installer and zip builds in CI.
 
+Signed macOS/Windows installers are supported through GitHub Secrets in the release workflow; see [RELEASES.md](RELEASES.md) for setup.
+
 ## Developer commands
 Run from [frontend](frontend):
 
