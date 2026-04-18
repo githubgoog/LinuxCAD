@@ -26,14 +26,15 @@ jobs:
             os: macos-latest
             buildScript: electron:build:mac
             artifactPath: |
-              frontend/release/*-mac-*.dmg
-              frontend/release/*-mac-*.zip
+              frontend/release/*.dmg
+              frontend/release/*.zip
           - name: Windows
             os: windows-latest
             buildScript: electron:build:win
             artifactPath: |
-              frontend/release/*-win-*.exe
-              frontend/release/*-win-*.zip
+              frontend/release/*.exe
+              frontend/release/*.msi
+              frontend/release/*.zip
 
     env:
       CI: true

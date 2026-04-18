@@ -32,14 +32,15 @@ jobs:
             os: macos-latest
             buildScript: electron:build:mac
             artifactPath: |
-              frontend/release/*-mac-*.dmg
-              frontend/release/*-mac-*.zip
+              frontend/release/*.dmg
+              frontend/release/*.zip
           - name: Windows
             os: windows-latest
             buildScript: electron:build:win
             artifactPath: |
-              frontend/release/*-win-*.exe
-              frontend/release/*-win-*.zip
+              frontend/release/*.exe
+              frontend/release/*.msi
+              frontend/release/*.zip
 
     env:
       CI: true
@@ -94,7 +95,7 @@ jobs:
       - name: Flatten assets
         run: |
           mkdir -p release-assets
-          find dist-artifacts -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' -o -name '*.zip' -o -name '*.exe' \) -exec cp {} release-assets/ \;
+          find dist-artifacts -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' -o -name '*.zip' -o -name '*.exe' -o -name '*.msi' \) -exec cp {} release-assets/ \;
           ls -lah release-assets
 
       - name: Resolve release tag
