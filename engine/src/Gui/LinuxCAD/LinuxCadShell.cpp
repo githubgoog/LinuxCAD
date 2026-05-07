@@ -101,26 +101,16 @@ Shell* shell()
 void Shell::reloadAiProvider()
 {
     Provider* fresh = Provider::createFromSettings(mainWindow_);
+
     if (suggestionEngine_) {
-        suggestionEngine_->stop();
-        suggestionEngine_->deleteLater();
-        suggestionEngine_ = nullptr;
+        suggestionEngine_->setProvider(fresh);
     }
     if (aiProvider_ && aiProvider_ != fresh) {
         aiProvider_->deleteLater();
     }
     aiProvider_ = fresh;
-    suggestionEngine_ = new SuggestionEngine(aiProvider_, ghostToast_, mainWindow_);
-    QObject::connect(suggestionEngine_, &SuggestionEngine::stateChanged, topBar_,
-                     [](SuggestionEngine::State s) {
-                         if (auto* sh = Shell::instance()) {
-                             if (auto* tb = sh->topBar()) {
-                                 tb->onAiStateChanged(static_cast<int>(s));
-                             }
-                         }
-                     });
-    suggestionEngine_->start();
-    if (topBar_ != nullptr) {
+
+    if (topBar_ != nullptr && suggestionEngine_ != nullptr) {
         topBar_->onAiStateChanged(static_cast<int>(suggestionEngine_->state()));
     }
 }

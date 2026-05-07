@@ -30,14 +30,14 @@ public:
     static void applyForce();
 
     /// Returns a stable, ordered list of the curated shortcuts. Used by the
-    /// CheatSheet overlay to render itself.
+    /// CommandPalette shortcuts view.
     static const std::vector<ShortcutEntry>& curated();
 
     /// Repeat the previously executed command. Wired to `Space`.
     static void repeatLast();
 
     /// Record a command name as the most recently executed - called by
-    /// CommandPalette / CheatSheet when they invoke a command.
+    /// CommandPalette when it invokes a command.
     static void recordExecuted(const QString& commandName);
 };
 

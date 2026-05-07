@@ -71,6 +71,14 @@ TopBar::TopBar(QWidget* parent)
     // Global Ctrl+K shortcut for the command palette.
     auto* sc = new QShortcut(QKeySequence(QStringLiteral("Ctrl+K")), this);
     connect(sc, &QShortcut::activated, this, &TopBar::onCommandPaletteRequested);
+
+    // Ctrl+/ opens shortcuts view (folded into the palette via "?" trigger).
+    auto* scShortcuts = new QShortcut(QKeySequence(QStringLiteral("Ctrl+/")), this);
+    connect(scShortcuts, &QShortcut::activated, [this]() {
+        if (auto* sh = Shell::instance(); sh && sh->commandPalette()) {
+            sh->commandPalette()->showPalette(QStringLiteral("?"));
+        }
+    });
 }
 
 TopBar::~TopBar() = default;
@@ -151,8 +159,8 @@ void TopBar::buildLayout()
     userButton_->setPopupMode(QToolButton::InstantPopup);
     auto* userMenu = new QMenu(userButton_);
     userMenu->addAction(tr("Keyboard shortcuts (Ctrl+/)"), [] {
-        if (auto* sh = Shell::instance()) {
-            sh->showCheatSheet();
+        if (auto* sh = Shell::instance(); sh && sh->commandPalette()) {
+            sh->commandPalette()->showPalette(QStringLiteral("?"));
         }
     });
     userMenu->addSeparator();
