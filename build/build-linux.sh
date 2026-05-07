@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build LinuxCAD on Linux. Wraps FreeCAD's CMake.
+# Build LinuxCAD on Linux. Wraps the engine's CMake.
 #
 # Usage:
 #   build/build-linux.sh                # configure + build

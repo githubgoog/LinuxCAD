@@ -1,18 +1,18 @@
 # Third-party notices
 
-LinuxCAD is built on top of FreeCAD and the libraries FreeCAD depends on.
-Each component below is distributed under its own license; LinuxCAD's
-distribution complies with each.
+LinuxCAD is built on top of FreeCAD (used as the modeling engine) and the
+libraries FreeCAD depends on. Each component below is distributed under its
+own license; LinuxCAD's distribution complies with each.
 
-## FreeCAD
+## FreeCAD (engine)
 
 - License: LGPL-2.1-or-later
 - Source: https://github.com/FreeCAD/FreeCAD (vendored at tag `1.1.1`)
-- LinuxCAD ships the full FreeCAD source under `FreeCAD-main/`. Modifications
+- LinuxCAD ships the full engine source under `engine/`. Modifications
   applied by LinuxCAD are listed in `patches/README.md`.
-- LinuxCAD links against FreeCAD as a set of dynamic libraries
+- LinuxCAD links against the engine as a set of dynamic libraries
   (`libFreeCADBase`, `libFreeCADApp`, `libFreeCADGui`, etc.). The LGPL
-  permits this and also permits relinking against modified FreeCAD versions.
+  permits this and also permits relinking against modified versions.
 
 ## OpenCASCADE Technology
 
@@ -33,10 +33,10 @@ distribution complies with each.
 
 ## Other
 
-See the `LICENSE` file at the project root and `FreeCAD-main/LICENSE` for
-the full FreeCAD license, plus `FreeCAD-main/src/3rdParty/*` for individual
-third-party submodule licenses (GSL, OndselSolver, googletest).
+See the `LICENSE` file at the project root and `engine/LICENSE` for the
+full engine license, plus `engine/src/3rdParty/*` for individual third-party
+submodule licenses (GSL, OndselSolver, googletest).
 
-LinuxCAD's own additions under `FreeCAD-main/src/Gui/LinuxCAD/`,
-`branding/`, `build/`, `packaging/`, and `patches/` are licensed
-LGPL-2.1-or-later, matching the FreeCADGui library they extend.
+LinuxCAD's own additions under `engine/src/Gui/LinuxCAD/`, `branding/`,
+`build/`, `packaging/`, and `patches/` are licensed LGPL-2.1-or-later,
+matching the FreeCADGui library they extend.

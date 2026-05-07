@@ -3,74 +3,112 @@
 [![Desktop Build Matrix](https://github.com/githubgoog/LinuxCAD/actions/workflows/desktop-build-matrix.yml/badge.svg)](https://github.com/githubgoog/LinuxCAD/actions/workflows/desktop-build-matrix.yml)
 [![Release Publish](https://github.com/githubgoog/LinuxCAD/actions/workflows/release-publish.yml/badge.svg)](https://github.com/githubgoog/LinuxCAD/actions/workflows/release-publish.yml)
 
-> Friendly CAD, powered by FreeCAD's engine.
+> Friendly CAD for Linux — modern shell, full FreeCAD modeling underneath.
 
-LinuxCAD is a downstream fork of [FreeCAD](https://www.freecad.org/) that
-keeps **everything** good about FreeCAD's modeling — the 3D viewport, the
-sketcher, PartDesign, Part, Draft, TechDraw, Assembly, Sheet Metal, FEM,
-Path — and replaces only the chrome around it with a more approachable
-experience:
+LinuxCAD is a desktop CAD app with a refreshed top bar, an integrated
+project manager, a welcome screen, and light/dark themes — built on the
+proven FreeCAD modeling engine (3D viewport, sketcher, PartDesign, Part,
+Draft, TechDraw, Assembly, Sheet Metal, FEM, Path).
 
-- A **modern top bar** with a project menu, workbench switcher, save
-  indicator, and a Cmd/Ctrl-K command palette.
-- A **Project Manager** dock that groups multiple parts, drawings,
-  assemblies, and references into a single `.lcadproj` file.
-- A **Welcome screen** with recent projects, "New project" templates, and
-  a one-click route to FreeCAD's classic Start workbench when you want it.
-- **Light and dark themes** that style the LinuxCAD additions without
-  touching FreeCAD's task panels.
+---
 
-The old Electron/React/Rust prototype that lived in this repo has been
-removed; LinuxCAD is now a single Qt application built directly from the
-forked FreeCAD source under [FreeCAD-main/](FreeCAD-main).
+## Install (recommended)
+
+One command. No compiling, no apt packages.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.sh | bash
+```
+
+This downloads the latest LinuxCAD AppImage from
+[GitHub Releases](https://github.com/githubgoog/LinuxCAD/releases/latest)
+into `~/.local/bin/`, registers a desktop entry, and sets up an icon.
+
+After it finishes, open your application menu and search **LinuxCAD** — or
+run:
+
+```bash
+linuxcad
+```
+
+If the repository has no published GitHub Release yet, install from a direct URL
+or local file instead:
+
+```bash
+bash install.sh --appimage-url "https://example.com/LinuxCAD-1.0.0-x86_64.AppImage"
+# or
+bash install.sh --local-appimage "/path/to/LinuxCAD-1.0.0-x86_64.AppImage"
+```
+
+To upgrade later, just re-run the same `curl ... | bash` command. To remove:
+
+```bash
+bash install.sh --uninstall
+```
+
+### Manual download
+
+Prefer to grab a file yourself? Open
+[Releases](https://github.com/githubgoog/LinuxCAD/releases/latest), download
+the AppImage matching your CPU (`x86_64` or `aarch64`), then:
+
+```bash
+chmod +x LinuxCAD-*.AppImage
+./LinuxCAD-*.AppImage
+```
+
+Most distros work out of the box. If launch fails with a FUSE error, install
+`libfuse2` (`sudo apt install libfuse2` on Debian/Ubuntu).
+
+### macOS / Windows
+
+Bring-your-own builds are produced by CI — see the latest release page. A
+polished installer story for macOS and Windows is on the roadmap.
+
+---
 
 ## Repository layout
 
 ```
 LinuxCAD/
-├── FreeCAD-main/              # Vendored FreeCAD source (pinned to 1.1.1)
-│   └── src/Gui/LinuxCAD/      # NEW: LinuxCAD shell module (top bar, project
-│                              # manager dock, welcome screen, command
-│                              # palette, theme, project model)
+├── install.sh                 # One-shot installer (downloads AppImage)
+├── linuxcad                   # User launcher (AppImage-only, safe defaults)
+├── linuxcad-dev               # Developer launcher (can build from source)
+├── engine/                    # Vendored FreeCAD source (the modeling engine)
+│   ├── LINUXCAD.md            # Why this folder exists
+│   └── src/Gui/LinuxCAD/      # LinuxCAD shell module: top bar, project
+│                              # manager, welcome screen, palette, theme
 ├── branding/                  # LinuxCAD icons, splash, themes (drop-in)
-├── build/                     # Cross-platform build scripts (CMake wrappers)
+├── build/                     # CMake wrapper scripts (Linux/macOS/Windows)
 ├── packaging/                 # AppImage, .deb, .dmg, NSIS scripts + NOTICES
-├── patches/                   # LGPL audit trail of FreeCAD modifications
-├── .github/workflows/         # CI matrix building all three platforms
-└── LICENSE                    # LGPL-2.1-or-later
+├── patches/                   # Audit trail of changes to the engine
+├── scripts/                   # Developer helpers (dependency installer)
+└── .github/workflows/         # CI matrix and release publishing
 ```
 
-## Building from source
+---
+
+## Developing
+
+Most users do **not** need this — just use `install.sh`. This section is for
+contributors building LinuxCAD from source.
 
 ### Linux
 
 ```bash
-# Easiest: run the helper (adjust for your distro):
-#   bash scripts/install-linux-deps.sh
-
-sudo apt install build-essential cmake ninja-build qt6-base-dev qt6-tools-dev \
-                 libcoin-dev \
-                 libocct-foundation-dev \
-                 libocct-data-exchange-dev \
-                 libocct-modeling-data-dev \
-                 libocct-modeling-algorithms-dev \
-                 libocct-ocaf-dev \
-                 libocct-visualization-dev \
-                 libxerces-c-dev libboost-all-dev libeigen3-dev libfmt-dev \
-                 libyaml-cpp-dev python3-dev python3-pip \
-                 libpyside6-dev libshiboken6-dev pyside6-tools \
-                 swig pkg-config
-
-# Prefer the no-space symlink if your folder is named "Linux CAD":
-#   cd ~/Coding/LinuxCAD
-
-./build/build-linux.sh           # configure + build
-./build/build-linux.sh --install # plus install to build/_install
-./packaging/linux/build-deb.sh
-./packaging/linux/build-appimage.sh
+bash scripts/install-linux-deps.sh         # build dependencies
+./build/build-linux.sh --install            # configure, build, install to build/_install
+./packaging/linux/build-appimage.sh         # produce a LinuxCAD-*.AppImage
 ```
 
-Launching from the app menu, an AppImage, or a dev build is described in [LAUNCH.md](LAUNCH.md).
+Developer entry points:
+
+- `./linuxcad` launches AppImage only (no compile fallback).
+- `./linuxcad --self-check` prints diagnostics for user installs.
+- `./linuxcad-dev` runs repo binaries and can build from source if missing.
+
+For deeper notes (paths with spaces, dev menu entries, Shiboken warnings),
+see [LAUNCH.md](LAUNCH.md).
 
 ### macOS
 
@@ -91,28 +129,30 @@ pwsh packaging/windows/build-nsis.ps1
 CI runs all three flows automatically — see
 [.github/workflows/desktop-build-matrix.yml](.github/workflows/desktop-build-matrix.yml).
 
-## Branding (drop-in)
+### Branding (drop-in)
 
 Place the assets listed in [branding/icons/README.md](branding/icons/README.md)
 into `branding/icons/`. The build scripts run
 [branding/apply-branding.sh](branding/apply-branding.sh) before CMake to
-overlay them onto FreeCAD's defaults — no source edits required.
+overlay them onto the engine's defaults — no source edits required.
 
-## What we changed in FreeCAD
+### Engine modifications
 
-- Added a new module: [FreeCAD-main/src/Gui/LinuxCAD/](FreeCAD-main/src/Gui/LinuxCAD/).
-- Hooked it into the existing `Gui::MainWindow` constructor with one line in
-  [FreeCAD-main/src/Gui/MainWindow.cpp](FreeCAD-main/src/Gui/MainWindow.cpp).
-- Added the LinuxCAD shell to the `FreeCADGui` shared library via
-  [FreeCAD-main/src/Gui/CMakeLists.txt](FreeCAD-main/src/Gui/CMakeLists.txt).
-- Rebranded `App::Application::Config()` strings in
-  [FreeCAD-main/src/Main/MainGui.cpp](FreeCAD-main/src/Main/MainGui.cpp).
+LinuxCAD's UI shell lives at [engine/src/Gui/LinuxCAD/](engine/src/Gui/LinuxCAD/).
+A small set of hook points in the engine call into it; the engine's own UI
+(sketcher, task panels, viewport, tree, properties) is unchanged. Full audit
+trail in [patches/README.md](patches/README.md) and
+[engine/LINUXCAD.md](engine/LINUXCAD.md).
 
-The full audit trail is in [patches/README.md](patches/README.md). FreeCAD's
-own UI — sketcher, task panels, viewport, tree, properties — is **not**
-modified.
+---
+
+## Credits
+
+LinuxCAD is built on the FreeCAD modeling engine (LGPL-2.1+). The vendored
+engine source lives in [engine/](engine/) and retains its upstream README,
+LICENSE, and history. Third-party components (OpenCASCADE, Coin3D, Qt, etc.)
+are listed in [packaging/NOTICES.md](packaging/NOTICES.md).
 
 ## License
 
-LGPL-2.1-or-later. See [LICENSE](LICENSE) and
-[packaging/NOTICES.md](packaging/NOTICES.md) for third-party components.
+LGPL-2.1-or-later. See [LICENSE](LICENSE).

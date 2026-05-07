@@ -1,13 +1,13 @@
-LinuxCAD - friendly CAD powered by FreeCAD's engine
+LinuxCAD - friendly CAD powered by the FreeCAD engine
 Copyright (C) 2026 LinuxCAD contributors
 
-LinuxCAD is a downstream fork of FreeCAD. The FreeCAD source tree under
-FreeCAD-main/ is licensed under the GNU Lesser General Public License,
-version 2.1 or (at your option) any later version. See
-FreeCAD-main/LICENSE for the full text of that license.
+LinuxCAD is a downstream fork of FreeCAD. The vendored engine source under
+engine/ is licensed under the GNU Lesser General Public License, version
+2.1 or (at your option) any later version. See engine/LICENSE for the full
+text of that license.
 
 LinuxCAD's own additions under:
-  - FreeCAD-main/src/Gui/LinuxCAD/
+  - engine/src/Gui/LinuxCAD/
   - branding/
   - build/
   - packaging/

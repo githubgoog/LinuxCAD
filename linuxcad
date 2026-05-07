@@ -1,162 +1,112 @@
 #!/usr/bin/env bash
+# LinuxCAD user launcher (AppImage-only).
+#
+# Goals:
+# - Never compile or run a source build.
+# - Prefer stable user AppImage install path.
+# - Default to safe GPU settings to reduce hangs/crashes.
+#
+# Env vars:
+#   LINUXCAD_APPIMAGE=/path/to/LinuxCAD.AppImage
+#   LINUXCAD_SAFE_MODE=1   (default) force software OpenGL
+#   LINUXCAD_SAFE_MODE=0   disable software OpenGL
+
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT_DIR="${LINUXCAD_ROOT:-$SCRIPT_DIR}"
+log()  { printf '[linuxcad] %s
+' "$*"; }
+warn() { printf '[linuxcad] %s
+' "$*" >&2; }
 
-# If invoked from ~/.local/bin (or another copied location), auto-detect the
-# canonical repo path used on this machine. Prefer the no-space symlink when
-# present (CMake / Python tooling breaks on paths with spaces).
-if [ ! -x "$ROOT_DIR/build/build-linux.sh" ] && [ ! -x "$ROOT_DIR/build/build-mac.sh" ]; then
-    if [ -x "/home/sabastian/Coding/LinuxCAD/build/build-linux.sh" ] || [ -x "/home/sabastian/Coding/LinuxCAD/build/build-mac.sh" ]; then
-        ROOT_DIR="/home/sabastian/Coding/LinuxCAD"
-    elif [ -x "/home/sabastian/Coding/Linux CAD/build/build-linux.sh" ] || [ -x "/home/sabastian/Coding/Linux CAD/build/build-mac.sh" ]; then
-        ROOT_DIR="/home/sabastian/Coding/Linux CAD"
+usage() {
+cat <<'EOF'
+LinuxCAD launcher (user mode)
+
+Usage:
+  linuxcad [app arguments]
+  linuxcad --self-check
+  linuxcad --help
+
+Behavior:
+  - Launches installed AppImage only (no source build fallback)
+  - Safe graphics mode is ON by default to avoid startup hangs
+EOF
+}
+
+pick_appimage() {
+    if [ -n "${LINUXCAD_APPIMAGE:-}" ] && [ -f "$LINUXCAD_APPIMAGE" ]; then
+        printf '%s
+' "$LINUXCAD_APPIMAGE"; return 0
     fi
-fi
 
-find_linuxcad_appimage() {
-    # Explicit path always wins (e.g. a known-good release you downloaded).
-    if [ -n "${LINUXCAD_APPIMAGE:-}" ] && [ -f "${LINUXCAD_APPIMAGE}" ]; then
-        printf "%s\n" "${LINUXCAD_APPIMAGE}"
-        return 0
-    fi
-
-    local newest=""
-    local f
+    local newest='' f
     shopt -s nullglob
-    # Prefer AppImages produced by *this* repo's packaging (not a random file
-    # in ~/.local/bin — that name was used by the old Electron prototype).
-    for f in "$ROOT_DIR/build/_packages"/LinuxCAD-*.AppImage; do
+    for f in "$HOME/.local/bin"/LinuxCAD-*.AppImage "$HOME/.local/bin"/LinuxCAD*.AppImage; do
         [ -f "$f" ] || continue
         if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then
             newest="$f"
         fi
     done
-
-    if [ "${LINUXCAD_USE_SYSTEM_APPIMAGE:-0}" = "1" ]; then
-        for f in "$HOME/.local/bin"/LinuxCAD*.AppImage "$HOME"/LinuxCAD*.AppImage; do
-            [ -f "$f" ] || continue
-            if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then
-                newest="$f"
-            fi
-        done
-    fi
     shopt -u nullglob
 
-    if [ -n "$newest" ]; then
-        printf "%s\n" "$newest"
-        return 0
+    [ -n "$newest" ] && { printf '%s
+' "$newest"; return 0; }
+    return 1
+}
+
+self_check() {
+    echo 'LinuxCAD self-check'
+    echo '-------------------'
+    echo "OS: $(uname -s)"
+    echo "Arch: $(uname -m)"
+    echo "Safe mode: ${LINUXCAD_SAFE_MODE:-1}"
+    echo "PATH has ~/.local/bin: $([[ ":$PATH:" == *":$HOME/.local/bin:"* ]] && echo yes || echo no)"
+
+    local appimg
+    appimg="$(pick_appimage || true)"
+    if [ -n "$appimg" ]; then
+        echo "AppImage: $appimg"
+        [ -x "$appimg" ] && echo 'Executable: yes' || echo 'Executable: no'
+    else
+        echo 'AppImage: not found in ~/.local/bin'
     fi
-    return 1
+
+    command -v fusermount >/dev/null 2>&1 || command -v fusermount3 >/dev/null 2>&1       && echo 'FUSE helper: yes' || echo 'FUSE helper: no (install libfuse2 if launch fails)'
+
+    echo
+    if [ -z "$appimg" ]; then
+        echo 'Install command:'
+        echo '  curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.sh | bash'
+    fi
 }
 
-find_linuxcad_bin() {
-    local candidates=(
-        "$ROOT_DIR/build/_out/bin/LinuxCAD"
-        "$ROOT_DIR/build/_out/bin/FreeCAD"
-        "$ROOT_DIR/build/_out/src/Main/FreeCADMain"
-        "$ROOT_DIR/build/_install/bin/LinuxCAD"
-        "$ROOT_DIR/build/_install/bin/FreeCAD"
-        "$ROOT_DIR/build/_install/MacOS/LinuxCAD.app/Contents/MacOS/LinuxCAD"
-        "$ROOT_DIR/build/_install/LinuxCAD.app/Contents/MacOS/LinuxCAD"
-    )
-
-    local c
-    for c in "${candidates[@]}"; do
-        if [ -x "$c" ]; then
-            printf "%s\n" "$c"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-build_if_needed() {
-    local os
-    os="$(uname -s)"
-    case "$os" in
-        Linux)
-            echo "LinuxCAD binary not found. Building for Linux..."
-            echo "Tip: use repo path without a space, e.g. cd ~/Coding/LinuxCAD"
-            "$ROOT_DIR/build/build-linux.sh"
-            ;;
-        Darwin)
-            echo "LinuxCAD binary not found. Building for macOS..."
-            "$ROOT_DIR/build/build-mac.sh"
-            ;;
-        MINGW*|MSYS*|CYGWIN*|Windows_NT)
-            echo "LinuxCAD binary not found. Build on Windows with:"
-            echo "  pwsh build/build-win.ps1"
-            return 1
-            ;;
-        *)
-            echo "Unsupported OS: $os"
-            return 1
-            ;;
-    esac
-}
-
-print_build_help() {
-    cat >&2 <<EOF
-
-Could not run LinuxCAD. Fix one of the following:
-
-  1) Install a release AppImage and optionally set:
-       export LINUXCAD_APPIMAGE="\$HOME/.local/bin/LinuxCAD.AppImage"
-
-  2) Install missing build libraries (common: Open CASCADE exchange), then rebuild:
-       sudo apt install libocct-data-exchange-dev
-       cd ~/Coding/LinuxCAD && ./build/build-linux.sh --install
-
-  3) Full dependency list: see LAUNCH.md and scripts/install-linux-deps.sh
-
-Repository root detected as: $ROOT_DIR
-EOF
-}
-
-if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    cat <<'EOF'
-LinuxCAD launcher
-
-Usage:
-  linuxcad [arguments passed to the app]
-
-Search order:
-  1) Built binary under build/_out or build/_install (FreeCAD or LinuxCAD name)
-  2) LINUXCAD_APPIMAGE, then newest LinuxCAD*.AppImage under this repo's build/_packages/
-  3) Only if LINUXCAD_USE_SYSTEM_APPIMAGE=1: ~/.local/bin or $HOME LinuxCAD*.AppImage
-  4) On Linux/macOS, runs build/build-*.sh if still nothing is found
-
-See LAUNCH.md for paths with spaces vs the LinuxCAD symlink.
-EOF
+if [ "${1:-}" = '--help' ] || [ "${1:-}" = '-h' ]; then
+    usage
+    exit 0
+fi
+if [ "${1:-}" = '--self-check' ]; then
+    self_check
     exit 0
 fi
 
-if [ ! -x "$ROOT_DIR/build/build-linux.sh" ] && [ ! -x "$ROOT_DIR/build/build-mac.sh" ]; then
-    echo "Build scripts not found under: $ROOT_DIR"
-    echo "Set LINUXCAD_ROOT to your LinuxCAD checkout (use ~/Coding/LinuxCAD if you use the symlink)."
+APPIMG="$(pick_appimage || true)"
+if [ -z "$APPIMG" ]; then
+    warn 'No LinuxCAD AppImage found.'
+    warn 'Install with:'
+    warn '  curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.sh | bash'
     exit 1
 fi
 
-BIN_PATH="$(find_linuxcad_bin || true)"
-
-if [ -z "$BIN_PATH" ]; then
-    build_if_needed || true
-    BIN_PATH="$(find_linuxcad_bin || true)"
+if [ ! -x "$APPIMG" ]; then
+    chmod +x "$APPIMG" 2>/dev/null || true
 fi
 
-if [ -n "$BIN_PATH" ]; then
-    echo "Launching: $BIN_PATH"
-    exec "$BIN_PATH" "$@"
+# Default to safe graphics mode to avoid 49% startup hangs on problematic GPUs.
+if [ "${LINUXCAD_SAFE_MODE:-1}" = '1' ]; then
+    export LIBGL_ALWAYS_SOFTWARE=1
+    export QT_OPENGL=software
+    export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
 fi
 
-APPIMG="$(find_linuxcad_appimage || true)"
-if [ -n "$APPIMG" ]; then
-    echo "Launching AppImage: $APPIMG"
-    exec "$APPIMG" "$@"
-fi
-
-print_build_help
-exit 1
+log "Launching AppImage: $APPIMG"
+exec "$APPIMG" "$@"

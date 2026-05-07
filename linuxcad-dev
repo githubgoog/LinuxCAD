@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# LinuxCAD developer launcher (build-capable).
+# Use this from a repository checkout when developing the engine/shell.
+
+set -euo pipefail
+
+_self="${BASH_SOURCE[0]:-$0}"
+SCRIPT_DIR="$(cd "$(dirname "$_self")" && pwd)"
+
+log()  { printf '[linuxcad-dev] %s
+' "$*"; }
+warn() { printf '[linuxcad-dev] %s
+' "$*" >&2; }
+
+resolve_root() {
+    local d real
+    if [ -n "${LINUXCAD_ROOT:-}" ]; then
+        d="$(cd "$LINUXCAD_ROOT" 2>/dev/null && pwd || true)"
+        if [ -n "$d" ] && [ -r "$d/build/common.sh" ]; then
+            printf '%s
+' "$d"; return 0
+        fi
+    fi
+    d="$SCRIPT_DIR"
+    if [ -r "$d/build/common.sh" ]; then
+        printf '%s
+' "$d"; return 0
+    fi
+    real="$(readlink -f "$_self" 2>/dev/null || true)"
+    if [ -n "$real" ]; then
+        d="$(cd "$(dirname "$real")" && pwd)"
+        if [ -r "$d/build/common.sh" ]; then
+            printf '%s
+' "$d"; return 0
+        fi
+    fi
+    return 1
+}
+
+find_bin() {
+    local candidates=(
+        "$BUILD_DIR/bin/LinuxCAD"
+        "$BUILD_DIR/bin/FreeCAD"
+        "$BUILD_DIR/src/Main/FreeCADMain"
+        "$INSTALL_DIR/bin/LinuxCAD"
+        "$INSTALL_DIR/bin/FreeCAD"
+    )
+    local c
+    for c in "${candidates[@]}"; do
+        [ -x "$c" ] && { printf '%s
+' "$c"; return 0; }
+    done
+    return 1
+}
+
+if [ "${1:-}" = '--help' ] || [ "${1:-}" = '-h' ]; then
+    cat <<'EOF'
+LinuxCAD developer launcher
+
+Usage:
+  ./linuxcad-dev [app args]
+
+Behavior:
+  - Runs repo build if available
+  - Otherwise builds from source and runs it
+EOF
+    exit 0
+fi
+
+if ! ROOT_DIR="$(resolve_root)"; then
+    warn 'Could not locate a LinuxCAD repo (missing build/common.sh).'
+    exit 1
+fi
+
+export LINUXCAD_ROOT="$ROOT_DIR"
+# shellcheck disable=SC1091
+source "$ROOT_DIR/build/common.sh"
+
+BIN="$(find_bin || true)"
+if [ -z "$BIN" ]; then
+    case "$(uname -s)" in
+        Linux)  log 'No dev binary found; building...'; "$ROOT_DIR/build/build-linux.sh" ;;
+        Darwin) log 'No dev binary found; building...'; "$ROOT_DIR/build/build-mac.sh" ;;
+        *) warn 'Unsupported OS for auto-build'; exit 1 ;;
+    esac
+    BIN="$(find_bin || true)"
+fi
+
+if [ -z "$BIN" ]; then
+    warn 'Build finished but no executable was found.'
+    exit 1
+fi
+
+log "Launching: $BIN"
+exec "$BIN" "$@"

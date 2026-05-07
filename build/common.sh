@@ -1,13 +1,41 @@
 #!/usr/bin/env bash
 # Shared build configuration for LinuxCAD (Unix-like).
 # Sourced by build/build-linux.sh and build/build-mac.sh.
+#
+# Optional: export LINUXCAD_ROOT=/path/to/repo before sourcing (e.g. from the
+# linuxcad launcher) so paths match even when this file is not under the repo.
+#
+# If the repo path contains whitespace, build trees default under
+# $XDG_CACHE_HOME/linuxcad/build-<hash>/ (no spaces) unless LINUXCAD_BUILD_DIR /
+# LINUXCAD_INSTALL_DIR are set — avoids broken Ninja/rules and matches the
+# launcher when looking for binaries.
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SOURCE_DIR="$ROOT_DIR/FreeCAD-main"
-BUILD_DIR="${LINUXCAD_BUILD_DIR:-$ROOT_DIR/build/_out}"
-INSTALL_DIR="${LINUXCAD_INSTALL_DIR:-$ROOT_DIR/build/_install}"
+if [ -n "${LINUXCAD_ROOT:-}" ]; then
+    ROOT_DIR="$(cd "$LINUXCAD_ROOT" && pwd)"
+else
+    ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
+
+SOURCE_DIR="$ROOT_DIR/engine"
+
+_default_build="$ROOT_DIR/build/_out"
+_default_install="$ROOT_DIR/build/_install"
+if [ -z "${LINUXCAD_BUILD_DIR:-}" ] && [ -z "${LINUXCAD_INSTALL_DIR:-}" ]; then
+    if [[ "$ROOT_DIR" =~ [[:space:]] ]]; then
+        _slug="$(printf '%s' "$ROOT_DIR" | sha256sum 2>/dev/null | cut -c1-16 || true)"
+        if [ -z "$_slug" ]; then
+            _slug="$(printf '%s' "$ROOT_DIR" | cksum | awk '{print $1}')"
+        fi
+        _cache_base="${XDG_CACHE_HOME:-$HOME/.cache}/linuxcad/build-$_slug"
+        _default_build="$_cache_base/_out"
+        _default_install="$_cache_base/_install"
+    fi
+fi
+
+BUILD_DIR="${LINUXCAD_BUILD_DIR:-$_default_build}"
+INSTALL_DIR="${LINUXCAD_INSTALL_DIR:-$_default_install}"
 
 LINUXCAD_VERSION="${LINUXCAD_VERSION:-1.0.0}"
 LINUXCAD_BUILD_TYPE="${LINUXCAD_BUILD_TYPE:-Release}"

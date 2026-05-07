@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Copy LinuxCAD branding assets on top of the matching FreeCAD assets.
+# Copy LinuxCAD branding assets on top of the matching engine assets.
 #
 # This is invoked by build/build-linux.sh and build/build-mac.sh before
 # CMake configure. Missing files in branding/icons/ are silently skipped,
-# leaving FreeCAD's defaults in place.
+# leaving the engine's defaults in place.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ICONS_SRC="$ROOT/branding/icons"
-ICONS_DST="$ROOT/FreeCAD-main/src/Gui/Icons"
+ICONS_DST="$ROOT/engine/src/Gui/Icons"
 
 copy_if_present() {
     local src="$1"
@@ -21,7 +21,7 @@ copy_if_present() {
 }
 
 if [ ! -d "$ICONS_DST" ]; then
-    echo "branding: FreeCAD-main not found at $ICONS_DST; skipping" >&2
+    echo "branding: engine/ not found at $ICONS_DST; skipping" >&2
     exit 0
 fi
 

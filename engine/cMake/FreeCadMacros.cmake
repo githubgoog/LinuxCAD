@@ -3,6 +3,17 @@ include (CheckCXXSourceRuns)
 # ================================================================================
 # == Macros, mostly for special targets ==========================================
 
+# TO_NATIVE_PATH is for Windows directory separators. On Unix, CMake can emit
+# backslash-escaped spaces in paths, which breaks execute_process/Python (e.g.
+# paths like "Linux\ CAD" instead of "Linux CAD").
+macro(fc_to_exec_path INPUT OUTVAR)
+    if(WIN32)
+        file(TO_NATIVE_PATH "${INPUT}" ${OUTVAR})
+    else()
+        set("${OUTVAR}" "${INPUT}")
+    endif()
+endmacro()
+
 MACRO (fc_copy_sources target_name outpath)
 	if(BUILD_VERBOSE_GENERATION)
 		set(fc_details " (fc_copy_sources called from ${CMAKE_CURRENT_SOURCE_DIR})")
@@ -33,11 +44,11 @@ MACRO (fc_copy_sources target_name outpath)
 ENDMACRO(fc_copy_sources)
 
 MACRO (fc_copy_file_if_different inputfile outputfile)
-    if (EXISTS ${inputfile})
-        if (EXISTS ${outputfile})
+    if (EXISTS "${inputfile}")
+        if (EXISTS "${outputfile}")
             execute_process(
-                COMMAND ${CMAKE_COMMAND} -E compare_files ${inputfile}
-                                                          ${outputfile}
+                COMMAND "${CMAKE_COMMAND}" -E compare_files "${inputfile}"
+                                                            "${outputfile}"
                 RESULT_VARIABLE DIFFERENT_FILES
                 OUTPUT_QUIET
                 ERROR_QUIET
@@ -120,14 +131,14 @@ ENDMACRO(fc_target_copy_resource_flat)
 # To be removed once all instances are migrated to generate_from_py
 macro(generate_from_xml BASE_NAME)
     set(TOOL_PATH "${CMAKE_SOURCE_DIR}/src/Tools/bindings/generate.py")
-    file(TO_NATIVE_PATH "${TOOL_PATH}" TOOL_NATIVE_PATH)
-    file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.xml" SOURCE_NATIVE_PATH)
+    fc_to_exec_path("${TOOL_PATH}" TOOL_NATIVE_PATH)
+    fc_to_exec_path("${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.xml" SOURCE_NATIVE_PATH)
 
     set(SOURCE_CPP_PATH "${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.cpp" )
     
     # BASE_NAME may include also a path name
     GET_FILENAME_COMPONENT(OUTPUT_PATH "${SOURCE_CPP_PATH}" PATH)
-    file(TO_NATIVE_PATH "${OUTPUT_PATH}" OUTPUT_NATIVE_PATH)
+    fc_to_exec_path("${OUTPUT_PATH}" OUTPUT_NATIVE_PATH)
     if(NOT EXISTS "${SOURCE_CPP_PATH}")
         # assures the source files are generated at least once
         message(STATUS "${SOURCE_CPP_PATH}")
@@ -137,7 +148,7 @@ macro(generate_from_xml BASE_NAME)
     endif()
     add_custom_command(
         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.h" "${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}.cpp"
-        COMMAND ${Python3_EXECUTABLE} "${TOOL_NATIVE_PATH}" --outputPath "${OUTPUT_NATIVE_PATH}" ${BASE_NAME}.xml
+        COMMAND "${Python3_EXECUTABLE}" "${TOOL_NATIVE_PATH}" --outputPath "${OUTPUT_NATIVE_PATH}" ${BASE_NAME}.xml
         MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.xml"
         DEPENDS
         "${CMAKE_SOURCE_DIR}/src/Tools/bindings/templates/templateClassPyExport.py"
@@ -149,15 +160,15 @@ endmacro(generate_from_xml)
 
 macro(generate_from_py_impl BASE_NAME SUFFIX)
     set(TOOL_PATH "${CMAKE_SOURCE_DIR}/src/Tools/bindings/generate.py")
-    file(TO_NATIVE_PATH "${TOOL_PATH}" TOOL_NATIVE_PATH)
-    file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.pyi" SOURCE_NATIVE_PATH)
+    fc_to_exec_path("${TOOL_PATH}" TOOL_NATIVE_PATH)
+    fc_to_exec_path("${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.pyi" SOURCE_NATIVE_PATH)
 
     set(SOURCE_CPP_PATH "${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}Py${SUFFIX}.cpp")
     set(SOURCE_H_PATH "${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}Py${SUFFIX}.h")
 
     # BASE_NAME may include also a path name
     GET_FILENAME_COMPONENT(OUTPUT_PATH "${SOURCE_CPP_PATH}" PATH)
-    file(TO_NATIVE_PATH "${OUTPUT_PATH}" OUTPUT_NATIVE_PATH)
+    fc_to_exec_path("${OUTPUT_PATH}" OUTPUT_NATIVE_PATH)
     if(NOT EXISTS "${SOURCE_CPP_PATH}")
         # Ensure the source files are generated at least once.
         message(STATUS "${SOURCE_CPP_PATH}")
@@ -170,7 +181,7 @@ macro(generate_from_py_impl BASE_NAME SUFFIX)
 
     add_custom_command(
         OUTPUT "${SOURCE_H_PATH}" "${SOURCE_CPP_PATH}"
-        COMMAND ${Python3_EXECUTABLE} "${TOOL_NATIVE_PATH}" --outputPath "${OUTPUT_NATIVE_PATH}" ${BASE_NAME}.pyi
+        COMMAND "${Python3_EXECUTABLE}" "${TOOL_NATIVE_PATH}" --outputPath "${OUTPUT_NATIVE_PATH}" ${BASE_NAME}.pyi
         MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.pyi"
         DEPENDS
             "${CMAKE_SOURCE_DIR}/src/Tools/bindings/templates/templateClassPyExport.py"
@@ -190,8 +201,8 @@ endmacro(generate_from_py_)
 
 macro(generate_embed_from_py BASE_NAME OUTPUT_FILE)
 		set(TOOL_PATH "${CMAKE_SOURCE_DIR}/src/Tools/PythonToCPP.py")
-		file(TO_NATIVE_PATH "${TOOL_PATH}" TOOL_NATIVE_PATH)
-		file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.py" SOURCE_NATIVE_PATH)
+		fc_to_exec_path("${TOOL_PATH}" TOOL_NATIVE_PATH)
+		fc_to_exec_path("${CMAKE_CURRENT_SOURCE_DIR}/${BASE_NAME}.py" SOURCE_NATIVE_PATH)
 		add_custom_command(
 		 		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_FILE}"
 		 		COMMAND "${Python3_EXECUTABLE}" "${TOOL_NATIVE_PATH}" "${SOURCE_NATIVE_PATH}" "${OUTPUT_FILE}"
@@ -203,8 +214,8 @@ endmacro(generate_embed_from_py)
 
 macro(generate_from_any INPUT_FILE OUTPUT_FILE VARIABLE)
 		set(TOOL_PATH "${CMAKE_SOURCE_DIR}/src/Tools/PythonToCPP.py")
-		file(TO_NATIVE_PATH "${TOOL_PATH}" TOOL_NATIVE_PATH)
-		file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_FILE}" SOURCE_NATIVE_PATH)
+		fc_to_exec_path("${TOOL_PATH}" TOOL_NATIVE_PATH)
+		fc_to_exec_path("${CMAKE_CURRENT_SOURCE_DIR}/${INPUT_FILE}" SOURCE_NATIVE_PATH)
 		add_custom_command(
 		 		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_FILE}"
 		 		COMMAND "${Python3_EXECUTABLE}" "${TOOL_NATIVE_PATH}" "${SOURCE_NATIVE_PATH}" "${OUTPUT_FILE}" "${VARIABLE}"

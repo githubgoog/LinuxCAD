@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Install typical build dependencies for LinuxCAD (FreeCAD fork) on Debian/Ubuntu.
+# Install typical build dependencies for LinuxCAD on Debian/Ubuntu.
+# Most users do not need this — they should download a LinuxCAD AppImage
+# from GitHub Releases. This script is for developers building from source.
 # Run with: bash scripts/install-linux-deps.sh
 
 set -euo pipefail
@@ -21,4 +23,4 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   libzipios++-dev python3-dev python3-pip python3-matplotlib \
   python3-pyside6.qtcore python3-pyside6.qtgui python3-pyside6.qtwidgets
 
-echo "Done. Build with: cd ~/Coding/LinuxCAD && ./build/build-linux.sh --install"
+echo "Done. Build with: ./build/build-linux.sh --install"

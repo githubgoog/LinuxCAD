@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build LinuxCAD on macOS. Wraps FreeCAD's CMake.
+# Build LinuxCAD on macOS. Wraps the engine's CMake.
 #
 # Usage:
 #   build/build-mac.sh                # configure + build

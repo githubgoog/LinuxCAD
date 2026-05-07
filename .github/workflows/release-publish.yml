@@ -141,6 +141,53 @@ jobs:
             echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Generate latest.json manifest
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.value }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import datetime, json, os, re, pathlib
+
+          tag = os.environ["RELEASE_TAG"]
+          version = tag.removeprefix("v")
+          base = f"https://github.com/{os.environ['REPO']}/releases/download/{tag}"
+
+          assets = sorted(p.name for p in pathlib.Path("release-assets").iterdir() if p.is_file())
+
+          def first(pattern, exclude=()):
+              rx = re.compile(pattern)
+              for name in assets:
+                  if rx.search(name) and not any(e in name for e in exclude):
+                      return name
+              return None
+
+          manifest = {
+              "version": version,
+              "tag": tag,
+              "_generated": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+          }
+          x86 = first(r"^LinuxCAD-.*-x86_64\.AppImage$") or first(r"^LinuxCAD-.*\.AppImage$", exclude=("aarch64",))
+          if x86:
+              manifest["linux_x86_64"] = f"{base}/{x86}"
+          arm = first(r"^LinuxCAD-.*-aarch64\.AppImage$")
+          if arm:
+              manifest["linux_aarch64"] = f"{base}/{arm}"
+          deb = first(r"\.deb$")
+          if deb:
+              manifest["linux_deb_amd64"] = f"{base}/{deb}"
+          dmg = first(r"\.dmg$")
+          if dmg:
+              manifest["macos"] = f"{base}/{dmg}"
+          exe = first(r"\.exe$")
+          if exe:
+              manifest["windows"] = f"{base}/{exe}"
+
+          out = pathlib.Path("release-assets/latest.json")
+          out.write_text(json.dumps(manifest, indent=2) + "\n")
+          print(out.read_text())
+          PY
+
       - name: Create or update release
         uses: softprops/action-gh-release@v2
         with:

@@ -1,4 +1,4 @@
-# Build LinuxCAD on Windows. Wraps FreeCAD's CMake.
+# Build LinuxCAD on Windows. Wraps the engine's CMake.
 #
 # Usage:
 #   pwsh build/build-win.ps1
@@ -16,7 +16,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RootDir    = (Resolve-Path "$PSScriptRoot/..").Path
-$SourceDir  = Join-Path $RootDir "FreeCAD-main"
+$SourceDir  = Join-Path $RootDir "engine"
 $BuildDir   = if ($env:LINUXCAD_BUILD_DIR)   { $env:LINUXCAD_BUILD_DIR }   else { Join-Path $RootDir "build/_out" }
 $InstallDir = if ($env:LINUXCAD_INSTALL_DIR) { $env:LINUXCAD_INSTALL_DIR } else { Join-Path $RootDir "build/_install" }
 $Version    = if ($env:LINUXCAD_VERSION)     { $env:LINUXCAD_VERSION }     else { "1.0.0" }

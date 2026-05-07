@@ -13,7 +13,7 @@ Required:
 - `linuxcad-128.png`          — 128x128
 - `linuxcad-256.png`          — 256x256
 - `linuxcad-doc.svg`          — file-association icon for `.lcadproj`
-- `linuxcad-splash.png`       — splash image (about 600x300, FreeCAD default placement)
+- `linuxcad-splash.png`       — splash image (about 600x300, engine's default placement)
 - `linuxcad-about.png`        — about-dialog image (about 600x300)
 
 Optional / dev variants:
@@ -23,10 +23,10 @@ Optional / dev variants:
 - `linuxcad.ico`              — Windows icon
 
 When these are present, `branding/apply-branding.sh` will copy them on top of
-the corresponding FreeCAD assets under `FreeCAD-main/src/Gui/Icons/` and
-register them as `freecad`/`freecadsplash`/`freecadabout` so the existing
-runtime config in `MainGui.cpp` resolves to LinuxCAD's artwork without any
+the corresponding engine assets under `engine/src/Gui/Icons/` and register
+them as `freecad`/`freecadsplash`/`freecadabout` (the asset names the engine
+runtime expects) so `MainGui.cpp` resolves to LinuxCAD's artwork without any
 code changes.
 
-If a file is missing, the corresponding FreeCAD asset is left in place so
+If a file is missing, the corresponding engine asset is left in place so
 the build still succeeds.

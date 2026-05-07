@@ -1,71 +1,84 @@
-# Launching LinuxCAD on Linux
+# LinuxCAD developer launch notes
 
-## Two paths in `~/Coding` — not two copies
+> **Most users should not need this file.** The recommended install path is
+> `bash install.sh` (see [README.md](README.md)). This document is for
+> contributors building LinuxCAD from source.
 
-You may see both:
+## Launcher resolution order
 
-- `~/Coding/Linux CAD` — the real git checkout (folder name has a **space**).
-- `~/Coding/LinuxCAD` — a **symlink** to the same folder (no space).
+`./linuxcad` is now a **user launcher**:
 
-They are the **same repository** on disk. The symlink exists so builds and tools that mishandle spaces in paths still work. Prefer opening the project from:
+1. `$LINUXCAD_APPIMAGE` if set and present.
+2. Newest `LinuxCAD-*.AppImage` under `~/.local/bin/` (installed by `install.sh`).
 
-```text
-/home/sabastian/Coding/LinuxCAD
-```
+It does **not** attempt to compile from source. By default it enables safe
+software rendering (`LINUXCAD_SAFE_MODE=1`) to reduce GPU-related hangs.
 
-in your IDE and terminal when working on LinuxCAD.
+Use `./linuxcad --self-check` for a quick diagnostics summary.
 
-## Fastest way to open the app (already built)
+For contributors, use `./linuxcad-dev` (repo build + optional auto-build).
 
-The `linuxcad` launcher **prefers a binary built from this repo** (`build/_out` / `build/_install`). That is the FreeCAD-fork LinuxCAD.
-
-An old **Electron-era** build may still live at `~/.local/bin/LinuxCAD.AppImage`. That is **not** the same app. The launcher ignores it unless you opt in:
-
-```bash
-export LINUXCAD_USE_SYSTEM_APPIMAGE=1
-linuxcad
-```
-
-Or point to any AppImage explicitly:
+If you want to point the launcher at a specific AppImage:
 
 ```bash
 export LINUXCAD_APPIMAGE="$HOME/Downloads/LinuxCAD-1.0.0-x86_64.AppImage"
 linuxcad
 ```
 
-AppImages produced by this repo’s packaging script are picked up automatically from `build/_packages/` once you have built them.
+## Repository path
 
-## Building from source on Ubuntu/Debian
+Spaces in the path are fine — LinuxCAD's CMake patches (see
+[patches/README.md](patches/README.md)) quote paths through Python codegen
+and file-copy steps.
 
-The README lists core packages. If the link step fails with **cannot find -lTKSTEP** (or similar `TK*` libraries), install Open CASCADE **data exchange** dev files:
+If your path still trips up some external tool, the build scripts
+automatically place `build/_out` and `build/_install` under
+`$XDG_CACHE_HOME/linuxcad/build-<hash>/` whenever the repository path
+contains whitespace. Override with `LINUXCAD_BUILD_DIR` and
+`LINUXCAD_INSTALL_DIR` if you want a fixed location.
+
+## Building on Ubuntu/Debian
+
+```bash
+bash scripts/install-linux-deps.sh   # build dependencies
+./build/build-linux.sh --install
+```
+
+If the link step fails with `cannot find -lTKSTEP` (or similar `TK*`
+libraries), install OpenCASCADE **data exchange** dev files:
 
 ```bash
 sudo apt install libocct-data-exchange-dev
 ```
 
-Then rebuild from the **no-space** path:
+## Menu / desktop shortcut for a dev build
 
-```bash
-cd ~/Coding/LinuxCAD
-./build/build-linux.sh --install
+If you want a `.desktop` entry that launches your **local checkout's** build
+(rather than the user-installed AppImage), point `Exec` at the repo's
+`linuxcad-dev` script:
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=LinuxCAD (dev)
+Exec=/path/to/your/LinuxCAD/linuxcad-dev %F
+Icon=linuxcad
+Categories=Graphics;Engineering;3DGraphics;
 ```
 
-## Menu / desktop shortcut
-
-The `.desktop` file should use:
-
-- `Exec=/home/sabastian/.local/bin/linuxcad` (or your repo `./linuxcad` copied there)
-- `Path=/home/sabastian/Coding/LinuxCAD` (symlink path avoids CMake/Python issues with spaces)
-
-After changing dependencies or the launcher, run:
+Drop into `~/.local/share/applications/` and run:
 
 ```bash
 update-desktop-database ~/.local/share/applications
 ```
 
+The user-facing entry created by `install.sh` is independent of this and
+points at the AppImage.
+
 ## Python / Shiboken (optional warnings)
 
-If CMake warns that the `shiboken6` Python module is missing, install PySide/Shiboken for Python 3 (package names vary by distro) or use pip in a user environment:
+If CMake warns that `shiboken6` is missing, install PySide/Shiboken for
+Python 3 (package names vary by distro) or use pip:
 
 ```bash
 sudo apt install python3-pip
