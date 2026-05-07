@@ -4,14 +4,20 @@
 #ifndef _PreComp_
 #include <QAction>
 #include <QApplication>
+#include <QCheckBox>
 #include <QComboBox>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QFormLayout>
 #include <QHBoxLayout>
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QSettings>
 #include <QShortcut>
 #include <QSignalBlocker>
+#include <QStyle>
 #include <QToolButton>
 #include <QWidgetAction>
 #endif
@@ -130,12 +136,27 @@ void TopBar::buildLayout()
     saveIndicator_->setContentsMargins(8, 0, 8, 0);
     addWidget(saveIndicator_);
 
+    // --- AI badge -------------------------------------------------------
+    aiBadge_ = new QToolButton(this);
+    aiBadge_->setText(tr("AI"));
+    aiBadge_->setProperty("linuxcadRole", QStringLiteral("ai-status"));
+    aiBadge_->setProperty("state", QStringLiteral("disabled"));
+    aiBadge_->setToolTip(tr("AI assistant - click to configure"));
+    aiBadge_->setAutoRaise(false);
+    addWidget(aiBadge_);
+    connect(aiBadge_, &QToolButton::clicked, this, &TopBar::onAiBadgeClicked);
+
     // --- User area ------------------------------------------------------
     userButton_ = makeIconButton("user", tr("Account / preferences"), nullptr);
     userButton_->setPopupMode(QToolButton::InstantPopup);
     auto* userMenu = new QMenu(userButton_);
+    userMenu->addAction(tr("Keyboard shortcuts (Ctrl+/)"), [] {
+        if (auto* sh = Shell::instance()) {
+            sh->showCheatSheet();
+        }
+    });
+    userMenu->addSeparator();
     userMenu->addAction(tr("Preferences..."), [] {
-        // Reuse FreeCAD's existing preferences dialog command.
         if (auto* cmd = Gui::Application::Instance->commandManager().getCommandByName("Std_DlgPreferences")) {
             cmd->invoke(0);
         }
@@ -164,6 +185,12 @@ void TopBar::buildProjectMenu()
             cmd->invoke(0);
         }
     };
+
+    menu->addAction(tr("New Sketch... (S)"), [this] {
+        if (auto* sh = Shell::instance()) {
+            sh->newSketchInteractive();
+        }
+    });
 
     menu->addAction(tr("New Project..."), [this] {
         if (auto* pm = Shell::instance() ? Shell::instance()->projectManager() : nullptr) {
@@ -343,6 +370,95 @@ void TopBar::onQuickSearchEdited(const QString& text)
                 palette->showPalette(text);
             }
         }
+    }
+}
+
+void TopBar::onAiStateChanged(int state)
+{
+    if (aiBadge_ == nullptr) {
+        return;
+    }
+    QString stateStr = QStringLiteral("disabled");
+    QString label    = tr("AI");
+    QString tip      = tr("AI assistant disabled - click to configure");
+    switch (state) {
+        case 0: stateStr = QStringLiteral("disabled"); label = tr("AI");          tip = tr("AI assistant disabled"); break;
+        case 1: stateStr = QStringLiteral("idle");     label = tr("AI · Ready");  tip = tr("AI assistant idle - changes will trigger suggestions"); break;
+        case 2: stateStr = QStringLiteral("thinking"); label = tr("AI · ...");    tip = tr("AI assistant thinking"); break;
+        case 3: stateStr = QStringLiteral("idle");     label = tr("AI · Ready");  tip = tr("AI cooled off, will resume on next change"); break;
+        case 4: stateStr = QStringLiteral("error");    label = tr("AI · Error");  tip = tr("AI assistant ran into an error - click for details"); break;
+        default: break;
+    }
+    aiBadge_->setText(label);
+    aiBadge_->setProperty("state", stateStr);
+    aiBadge_->setToolTip(tip);
+    if (aiBadge_->style() != nullptr) {
+        aiBadge_->style()->unpolish(aiBadge_);
+        aiBadge_->style()->polish(aiBadge_);
+    }
+}
+
+void TopBar::onAiBadgeClicked()
+{
+    // Open a small inline AI settings dialog. Reuses QSettings-backed values
+    // and persists immediately so the next request picks them up.
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("AI assistant"));
+    dlg.setModal(true);
+    auto* layout = new QFormLayout(&dlg);
+
+    QSettings s;
+    auto* enabledCb = new QCheckBox(tr("Enable AI suggestions"), &dlg);
+    enabledCb->setChecked(s.value(QStringLiteral("LinuxCAD/AI/Enabled"), false).toBool());
+
+    auto* providerCb = new QComboBox(&dlg);
+    providerCb->addItem(tr("OpenAI / OpenAI-compatible"), QStringLiteral("openai-compatible"));
+    providerCb->addItem(tr("Anthropic Claude"),           QStringLiteral("anthropic"));
+    const QString persistedProvider =
+        s.value(QStringLiteral("LinuxCAD/AI/Provider"), QStringLiteral("openai-compatible")).toString();
+    for (int i = 0; i < providerCb->count(); ++i) {
+        if (providerCb->itemData(i).toString() == persistedProvider) {
+            providerCb->setCurrentIndex(i);
+        }
+    }
+
+    auto* endpointEdit = new QLineEdit(
+        s.value(QStringLiteral("LinuxCAD/AI/Endpoint"),
+                QStringLiteral("https://api.openai.com/v1")).toString(),
+        &dlg);
+
+    auto* modelEdit = new QLineEdit(
+        s.value(QStringLiteral("LinuxCAD/AI/Model"), QStringLiteral("gpt-4o-mini")).toString(),
+        &dlg);
+
+    auto* keyEdit = new QLineEdit(s.value(QStringLiteral("LinuxCAD/AI/ApiKey")).toString(), &dlg);
+    keyEdit->setEchoMode(QLineEdit::Password);
+    keyEdit->setPlaceholderText(tr("Bring your own API key"));
+
+    auto* consentCb = new QCheckBox(
+        tr("I understand modeling context will be sent to the chosen provider"),
+        &dlg);
+    consentCb->setChecked(s.value(QStringLiteral("LinuxCAD/AI/ConsentGivenV1"), false).toBool());
+
+    layout->addRow(enabledCb);
+    layout->addRow(tr("Provider:"),  providerCb);
+    layout->addRow(tr("Endpoint:"),  endpointEdit);
+    layout->addRow(tr("Model:"),     modelEdit);
+    layout->addRow(tr("API key:"),   keyEdit);
+    layout->addRow(consentCb);
+
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    layout->addRow(buttons);
+    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+
+    if (dlg.exec() == QDialog::Accepted) {
+        s.setValue(QStringLiteral("LinuxCAD/AI/Enabled"),       enabledCb->isChecked());
+        s.setValue(QStringLiteral("LinuxCAD/AI/Provider"),      providerCb->currentData().toString());
+        s.setValue(QStringLiteral("LinuxCAD/AI/Endpoint"),      endpointEdit->text().trimmed());
+        s.setValue(QStringLiteral("LinuxCAD/AI/Model"),         modelEdit->text().trimmed());
+        s.setValue(QStringLiteral("LinuxCAD/AI/ApiKey"),        keyEdit->text());
+        s.setValue(QStringLiteral("LinuxCAD/AI/ConsentGivenV1"),consentCb->isChecked());
     }
 }
 

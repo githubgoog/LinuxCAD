@@ -44,7 +44,10 @@ private Q_SLOTS:
 private:
     void buildUi();
     void rebuildIndex();
-    void runCommand(Gui::Command* cmd);
+    // NB: not "runCommand" - that name is a function-like macro in
+    // Gui/Command.h which would mangle this declaration once that header
+    // is included transitively (e.g. via LinuxCadShell.cpp).
+    void executeSelected(Gui::Command* cmd);
 
     QLineEdit*   query_     = nullptr;
     QListWidget* list_      = nullptr;

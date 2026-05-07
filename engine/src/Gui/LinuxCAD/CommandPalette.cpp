@@ -77,7 +77,7 @@ void CommandPalette::buildUi()
 
     list_ = new QListWidget(this);
     list_->setProperty("linuxcadRole", QStringLiteral("command-palette-list"));
-    list_->setUniformRowHeights(true);
+    list_->setUniformItemSizes(true);
     layout->addWidget(list_, 1);
     connect(list_, &QListWidget::itemActivated, this, &CommandPalette::onItemActivated);
 
@@ -185,7 +185,7 @@ void CommandPalette::onItemActivated(QListWidgetItem* item)
     if (!cmd) {
         return;
     }
-    runCommand(cmd);
+    executeSelected(cmd);
 }
 
 void CommandPalette::keyPressEvent(QKeyEvent* event)
@@ -216,7 +216,7 @@ void CommandPalette::keyPressEvent(QKeyEvent* event)
     QDialog::keyPressEvent(event);
 }
 
-void CommandPalette::runCommand(Gui::Command* cmd)
+void CommandPalette::executeSelected(Gui::Command* cmd)
 {
     if (!cmd) {
         return;

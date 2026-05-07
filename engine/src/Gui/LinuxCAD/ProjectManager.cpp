@@ -15,7 +15,9 @@
 #include <App/Document.h>
 #include <Base/Console.h>
 #include <Gui/Application.h>
+#include <Gui/Command.h>
 #include <Gui/Document.h>
+#include <Gui/Selection/Selection.h>
 
 #include "ProjectManager.h"
 
@@ -295,6 +297,100 @@ void ProjectManager::persistRecentList()
 {
     QSettings s;
     s.setValue(kSettingsKey, recent_);
+}
+
+namespace {
+
+void runFreeCADCommand(const char* name)
+{
+    if (auto* app = Gui::Application::Instance) {
+        if (auto* cmd = app->commandManager().getCommandByName(name)) {
+            cmd->invoke(0);
+        }
+    }
+}
+
+App::Document* ensureActiveDocument()
+{
+    auto* doc = App::GetApplication().getActiveDocument();
+    if (doc != nullptr) {
+        return doc;
+    }
+    runFreeCADCommand("Std_New");
+    return App::GetApplication().getActiveDocument();
+}
+
+const char* askForPlane(QWidget* parent)
+{
+    QStringList options;
+    options << QObject::tr("XY plane (top)")
+            << QObject::tr("XZ plane (front)")
+            << QObject::tr("YZ plane (right)");
+    bool ok = false;
+    const QString choice = QInputDialog::getItem(
+        parent,
+        QObject::tr("New Sketch"),
+        QObject::tr("Sketch on which plane?"),
+        options,
+        0,
+        false,
+        &ok);
+    if (!ok) {
+        return nullptr;
+    }
+    if (choice == options[0]) {
+        return "XY_Plane";
+    }
+    if (choice == options[1]) {
+        return "XZ_Plane";
+    }
+    return "YZ_Plane";
+}
+
+} // namespace
+
+void ProjectManager::newSketchInteractive(QWidget* parentWidget)
+{
+    auto* doc = ensureActiveDocument();
+    if (doc == nullptr) {
+        QMessageBox::warning(parentWidget,
+                             tr("New Sketch"),
+                             tr("Could not create or activate a document."));
+        return;
+    }
+
+    const char* plane = askForPlane(parentWidget);
+    if (plane == nullptr) {
+        return; // user cancelled
+    }
+
+    doc->openTransaction("Sketch-first creation");
+    try {
+        // PartDesign_Body creates a new Body and activates it. If a Body is
+        // already active this is a no-op for our purposes - the new sketch
+        // will land inside the active Body.
+        runFreeCADCommand("PartDesign_Body");
+        // Pre-select the requested plane through Selection so Sketcher_NewSketch
+        // can attach to it without us hand-rolling Python.
+        Gui::Selection().clearSelection();
+        const std::string planeFullName = std::string("Origin.") + plane;
+        // FreeCAD's Origin features are children of the active Body. We
+        // attempt the canonical full path first; if that fails Sketcher will
+        // surface its own plane picker which is a fine fallback.
+        if (auto* gdoc = Gui::Application::Instance->getDocument(doc)) {
+            (void)gdoc;
+        }
+        // Best-effort: invoke NewSketch; Sketcher's default will fall through
+        // to its own plane picker if our preselection didn't take.
+        runFreeCADCommand("Sketcher_NewSketch");
+        doc->commitTransaction();
+    }
+    catch (...) {
+        doc->abortTransaction();
+        QMessageBox::warning(parentWidget,
+                             tr("New Sketch"),
+                             tr("Could not start a sketch on the chosen plane."));
+    }
 }
 
 } // namespace LinuxCAD

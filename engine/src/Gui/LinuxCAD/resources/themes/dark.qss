@@ -213,3 +213,205 @@ QListWidget[linuxcadRole="command-palette-list"]::item:selected {
 QLabel[linuxcadRole="command-palette-footer"] {
     color: #6B7280;
 }
+
+/* ---------- Ribbon --------------------------------------------------- */
+QToolBar[linuxcadRole="ribbon"] {
+    background: #1B2027;
+    border: none;
+    border-bottom: 1px solid #2C333D;
+    padding: 0;
+    spacing: 0;
+}
+
+QScrollArea#LinuxCadRibbonScroll {
+    background: transparent;
+    border: none;
+}
+
+QWidget[linuxcadRole="ribbon-content"] {
+    background: transparent;
+}
+
+QWidget[linuxcadRole="ribbon-group"] {
+    background: transparent;
+}
+
+QToolButton[linuxcadRole="ribbon-button"] {
+    color: #E6EAF0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+}
+
+QToolButton[linuxcadRole="ribbon-button"]:hover {
+    background: #232932;
+    border-color: #2C333D;
+}
+
+QToolButton[linuxcadRole="ribbon-button"]:pressed,
+QToolButton[linuxcadRole="ribbon-button"]:checked {
+    background: #2A313B;
+    border-color: #418FDE;
+}
+
+QFrame[linuxcadRole="ribbon-divider"] {
+    color: #2C333D;
+    background: #2C333D;
+    max-width: 1px;
+    margin: 8px 4px;
+}
+
+QFrame[linuxcadRole="ribbon-inner-sep"] {
+    color: #2C333D;
+    background: #2C333D;
+    max-width: 1px;
+    margin: 12px 2px;
+}
+
+QLabel[linuxcadRole="ribbon-group-label"] {
+    color: #9AA3AF;
+    font-size: 10px;
+    padding-top: 1px;
+}
+
+QLabel[linuxcadRole="ribbon-empty"] {
+    color: #6B7280;
+    font-style: italic;
+    padding: 12px;
+}
+
+/* ---------- Tree dock + Properties dock ------------------------------ */
+QDockWidget[linuxcadRole="tree-dock"]::title,
+QDockWidget[linuxcadRole="props-dock"]::title {
+    background: #161A20;
+    color: #E6EAF0;
+    padding: 6px 10px;
+    border-bottom: 1px solid #2C333D;
+    font-weight: 600;
+}
+
+/* ---------- View widgets overlay (top-right above NaviCube) --------- */
+QWidget[linuxcadRole="view-widgets"] {
+    background: rgba(22, 26, 32, 220);
+    border: 1px solid #2C333D;
+    border-radius: 16px;
+    padding: 4px;
+}
+
+QToolButton[linuxcadRole="view-widget-btn"] {
+    background: transparent;
+    color: #E6EAF0;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 4px 8px;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+QToolButton[linuxcadRole="view-widget-btn"]:hover {
+    background: #232932;
+    border-color: #2C333D;
+}
+
+QToolButton[linuxcadRole="view-widget-btn"]:pressed,
+QToolButton[linuxcadRole="view-widget-btn"]:checked {
+    background: #2A313B;
+    border-color: #418FDE;
+}
+
+/* ---------- AI status badge in TopBar ------------------------------- */
+QToolButton[linuxcadRole="ai-status"] {
+    color: #E6EAF0;
+    background: #1B2434;
+    border: 1px solid #2C4061;
+    border-radius: 10px;
+    padding: 2px 10px;
+    font-weight: 600;
+}
+
+QToolButton[linuxcadRole="ai-status"][state="idle"]     { color: #5BA8F2; border-color: #2C4061; }
+QToolButton[linuxcadRole="ai-status"][state="thinking"] { color: #9BC6F0; border-color: #418FDE; }
+QToolButton[linuxcadRole="ai-status"][state="error"]    { color: #F08080; border-color: #663030; }
+QToolButton[linuxcadRole="ai-status"][state="disabled"] { color: #6B7280; border-color: #2C333D; background: #1B2027; }
+
+QToolButton[linuxcadRole="ai-status"]:hover { background: #232C42; }
+
+/* ---------- Ghost-toast AI suggestion ------------------------------- */
+QFrame[linuxcadRole="ai-toast"] {
+    background: rgba(22, 26, 32, 235);
+    border: 1px solid #2C4061;
+    border-radius: 12px;
+}
+
+QLabel[linuxcadRole="ai-toast-title"] {
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+QLabel[linuxcadRole="ai-toast-sub"] {
+    color: #9AA3AF;
+    font-size: 11px;
+}
+
+QToolButton[linuxcadRole="ai-toast-button"] {
+    color: #E6EAF0;
+    background: transparent;
+    border: 1px solid #2C333D;
+    border-radius: 6px;
+    padding: 4px 10px;
+}
+
+QToolButton[linuxcadRole="ai-toast-button"][primary="true"] {
+    background: #418FDE;
+    color: #FFFFFF;
+    border-color: #5BA8F2;
+}
+
+QToolButton[linuxcadRole="ai-toast-button"]:hover { background: #232932; }
+QToolButton[linuxcadRole="ai-toast-button"][primary="true"]:hover { background: #5BA8F2; }
+
+QLabel[linuxcadRole="ai-toast-why"] {
+    color: #5BA8F2;
+}
+
+/* ---------- Cheat sheet --------------------------------------------- */
+QDialog[linuxcadRole="cheat-sheet"] {
+    background: #161A20;
+    border: 1px solid #2C333D;
+    border-radius: 8px;
+}
+
+QLineEdit[linuxcadRole="cheat-sheet-input"] {
+    background: #0F1216;
+    color: #E6EAF0;
+    border: 1px solid #2C333D;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+}
+
+QLabel[linuxcadRole="cheat-sheet-section"] {
+    color: #5BA8F2;
+    font-weight: 700;
+    padding: 8px 4px 4px 4px;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+}
+
+QLabel[linuxcadRole="cheat-sheet-key"] {
+    color: #FFFFFF;
+    background: #232932;
+    border: 1px solid #2C333D;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+QLabel[linuxcadRole="cheat-sheet-name"] {
+    color: #E6EAF0;
+}

@@ -9,6 +9,8 @@
 #include <QTextStream>
 #endif
 
+#include <Gui/Application.h>
+
 #include "Theme.h"
 
 namespace Gui {
@@ -63,24 +65,34 @@ void Theme::applyVariant(Variant v)
 {
     current_ = v;
 
-    if (v == Variant::System) {
-        // System: don't override anything; let FreeCAD's existing stylesheet selection apply.
-        if (auto* app = qobject_cast<QApplication*>(QApplication::instance())) {
-            app->setStyleSheet(QString());
+    QSettings s;
+    s.setValue(kSettingsKey, variantToString(v));
+
+    // Defer to FreeCAD's stylesheet pipeline. Application::setStyleSheet now
+    // appends Theme::currentStylesheet() at the end, so a single reload picks
+    // up our QSS atomically with whatever FreeCAD theme is active.
+    if (auto* fcApp = Gui::Application::Instance) {
+        try {
+            fcApp->reloadStyleSheet();
+            return;
         }
-    }
-    else {
-        const QString css = loadStylesheet(v);
-        if (auto* app = qobject_cast<QApplication*>(QApplication::instance())) {
-            app->setStyleSheet(css);
+        catch (...) {
+            // Fall through to direct apply if reload isn't available yet.
         }
     }
 
-    QSettings s;
-    s.setValue(kSettingsKey, variantToString(v));
+    // Fallback - used during very early startup before MainWindow exists.
+    if (auto* app = qobject_cast<QApplication*>(QApplication::instance())) {
+        app->setStyleSheet(v == Variant::System ? QString() : loadStylesheet(v));
+    }
 }
 
 QString Theme::loadStylesheet(Variant v) const
+{
+    return stylesheetFor(v);
+}
+
+QString Theme::stylesheetFor(Variant v)
 {
     const QString path = resourcePathFor(v);
     if (path.isEmpty()) {
@@ -91,6 +103,13 @@ QString Theme::loadStylesheet(Variant v) const
         return QString();
     }
     return QString::fromUtf8(f.readAll());
+}
+
+QString Theme::currentStylesheet()
+{
+    QSettings s;
+    const QString persisted = s.value(kSettingsKey, QStringLiteral("dark")).toString();
+    return stylesheetFor(variantFromString(persisted));
 }
 
 } // namespace LinuxCAD

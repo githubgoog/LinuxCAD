@@ -44,6 +44,13 @@ for sub in bin lib share include; do
     fi
 done
 
+# PySide6 can include Qt3D Python extension modules that depend on libQt63D*.so.
+# Our runtime does not ship Qt3D and LinuxCAD does not use those modules, so keep
+# packaging deterministic by pruning them before linuxdeploy dependency scanning.
+if [ -d "$APPDIR/usr/lib/python3.11/site-packages/PySide6" ]; then
+    rm -f "$APPDIR/usr/lib/python3.11/site-packages/PySide6"/Qt3D*.so
+fi
+
 # LinuxCAD wrapper around bin/FreeCAD — keeps the engine binary name intact
 # but exposes "LinuxCAD" as the user-visible entry point.
 cat > "$APPDIR/usr/bin/LinuxCAD" <<'WRAPPER'
@@ -68,13 +75,25 @@ MimeType=application/x-extension-fcstd;application/x-extension-lcadproj;
 StartupNotify=true
 Terminal=false
 EOF
+cp "$APPDIR/usr/share/applications/org.linuxcad.LinuxCAD.desktop" \
+   "$APPDIR/org.linuxcad.LinuxCAD.desktop"
 
 mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
 ICON_DST="$APPDIR/usr/share/icons/hicolor/256x256/apps/org.linuxcad.LinuxCAD.png"
 if [ -f "$ROOT/branding/icons/linuxcad-256.png" ]; then
     cp "$ROOT/branding/icons/linuxcad-256.png" "$ICON_DST"
-elif [ -f "$INSTALL_DIR/share/icons/hicolor/256x256/apps/org.freecad.FreeCAD.png" ]; then
-    cp "$INSTALL_DIR/share/icons/hicolor/256x256/apps/org.freecad.FreeCAD.png" "$ICON_DST"
+else
+    for candidate in \
+        "$INSTALL_DIR/share/icons/hicolor/256x256/apps/org.freecad.FreeCAD.png" \
+        "$INSTALL_DIR/share/icons/hicolor/64x64/apps/org.freecad.FreeCAD.png" \
+        "$INSTALL_DIR/share/icons/hicolor/48x48/apps/org.freecad.FreeCAD.png" \
+        "$INSTALL_DIR/share/icons/hicolor/32x32/apps/org.freecad.FreeCAD.png" \
+        "$INSTALL_DIR/share/icons/hicolor/16x16/apps/org.freecad.FreeCAD.png"; do
+        if [ -f "$candidate" ]; then
+            cp "$candidate" "$ICON_DST"
+            break
+        fi
+    done
 fi
 if [ -f "$ICON_DST" ]; then
     cp "$ICON_DST" "$APPDIR/org.linuxcad.LinuxCAD.png"
@@ -93,7 +112,12 @@ APPRUN
 chmod +x "$APPDIR/AppRun"
 
 # Bundle Qt + libs if linuxdeploy is on PATH.
-if command -v linuxdeploy >/dev/null 2>&1; then
+# LinuxCAD's pixi env is already self-contained enough for AppImage use, and
+# linuxdeploy occasionally fails on optional PySide modules (QtGraphs/Qt3D/etc)
+# that are not required by LinuxCAD. Allow opting out (default off) so local
+# packaging remains reliable.
+USE_LINUXDEPLOY="${LINUXCAD_USE_LINUXDEPLOY:-0}"
+if [ "$USE_LINUXDEPLOY" = "1" ] && command -v linuxdeploy >/dev/null 2>&1; then
     DEPLOY_ARGS=(
         --appdir "$APPDIR"
         --desktop-file "$APPDIR/usr/share/applications/org.linuxcad.LinuxCAD.desktop"

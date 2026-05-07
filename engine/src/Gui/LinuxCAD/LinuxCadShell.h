@@ -19,11 +19,17 @@ namespace Gui {
 namespace LinuxCAD {
 
 class TopBar;
+class Ribbon;
 class ProjectManagerDock;
 class WelcomeScreen;
 class ProjectManager;
 class Theme;
 class CommandPalette;
+class CheatSheet;
+class ViewWidgetsOverlay;
+class SuggestionEngine;
+class GhostToast;
+class Provider;
 
 /// Install LinuxCAD shell on the given MainWindow.
 ///
@@ -42,11 +48,22 @@ public:
 
     Gui::MainWindow*    mainWindow() const { return mainWindow_; }
     TopBar*             topBar() const { return topBar_; }
+    Ribbon*             ribbon() const { return ribbon_; }
     ProjectManagerDock* projectDock() const { return projectDock_; }
     WelcomeScreen*      welcomeScreen() const { return welcomeScreen_; }
     ProjectManager*     projectManager() const { return projectManager_; }
     Theme*              theme() const { return theme_; }
     CommandPalette*     commandPalette() const { return commandPalette_; }
+    CheatSheet*         cheatSheet() const { return cheatSheet_; }
+    SuggestionEngine*   suggestionEngine() const { return suggestionEngine_; }
+    GhostToast*         ghostToast() const { return ghostToast_; }
+    Provider*           aiProvider() const { return aiProvider_; }
+
+    /// Show the keyboard cheat-sheet overlay. Routed from TopBar / shortcuts.
+    void showCheatSheet();
+
+    /// Open the sketch-first creation flow (pick plane + Sketcher_NewSketch).
+    void newSketchInteractive();
 
 private:
     friend GuiExport void install(Gui::MainWindow* mw);
@@ -56,13 +73,19 @@ private:
     Shell(const Shell&) = delete;
     Shell& operator=(const Shell&) = delete;
 
-    Gui::MainWindow*    mainWindow_    = nullptr;
-    TopBar*             topBar_        = nullptr;
-    ProjectManagerDock* projectDock_   = nullptr;
-    WelcomeScreen*      welcomeScreen_ = nullptr;
-    ProjectManager*     projectManager_= nullptr;
-    Theme*              theme_         = nullptr;
-    CommandPalette*     commandPalette_= nullptr;
+    Gui::MainWindow*    mainWindow_      = nullptr;
+    TopBar*             topBar_          = nullptr;
+    Ribbon*             ribbon_          = nullptr;
+    ProjectManagerDock* projectDock_     = nullptr;
+    WelcomeScreen*      welcomeScreen_   = nullptr;
+    ProjectManager*     projectManager_  = nullptr;
+    Theme*              theme_           = nullptr;
+    CommandPalette*     commandPalette_  = nullptr;
+    CheatSheet*         cheatSheet_      = nullptr;
+    ViewWidgetsOverlay* viewWidgets_     = nullptr;
+    SuggestionEngine*   suggestionEngine_= nullptr;
+    GhostToast*         ghostToast_      = nullptr;
+    Provider*           aiProvider_      = nullptr;
 };
 
 } // namespace LinuxCAD

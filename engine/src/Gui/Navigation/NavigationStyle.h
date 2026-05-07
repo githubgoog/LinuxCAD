@@ -559,6 +559,39 @@ protected:
     SbBool processSoEvent(const SoEvent* const ev) override;
 };
 
+/// LinuxCAD modern navigation - unified mouse + touchpad gestures.
+///
+/// Designed so a user can drive the viewer the same way with a Magic
+/// Trackpad / laptop touchpad as with a 3-button mouse:
+///   * two-finger drag (scroll) ............... pan
+///   * pinch / Ctrl+wheel ..................... zoom
+///   * Shift + scroll, Shift + middle drag .... orbit
+///   * middle drag ............................. orbit
+///   * left click ............................. select
+///   * left drag on empty space ................ rubberband select
+///   * right click ............................. context menu
+///
+/// Inherits from TouchpadNavigationStyle to keep its scroll-as-pan baseline,
+/// and overrides processSoEvent to add gesture / shift-orbit handling.
+class GuiExport LinuxCadNavigationStyle: public UserNavigationStyle
+{
+    using inherited = UserNavigationStyle;
+
+    TYPESYSTEM_HEADER_WITH_OVERRIDE();
+
+public:
+    LinuxCadNavigationStyle();
+    ~LinuxCadNavigationStyle() override;
+    const char* mouseButtons(ViewerMode) override;
+    std::string userFriendlyName() const override;
+
+protected:
+    SbBool processSoEvent(const SoEvent* const ev) override;
+
+private:
+    SbBool blockPan {false};
+};
+
 }  // namespace Gui
 // NOLINTEND(cppcoreguidelines-avoid*, readability-avoid-const-params-in-decls)
 

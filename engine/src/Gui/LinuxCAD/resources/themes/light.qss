@@ -125,3 +125,139 @@ QListWidget[linuxcadRole="command-palette-list"]::item:selected {
     background: #E4E8EE;
     color: #1A1F26;
 }
+
+QToolBar[linuxcadRole="ribbon"] {
+    background: #F5F7F9;
+    border: none;
+    border-bottom: 1px solid #DCE0E5;
+}
+
+QScrollArea#LinuxCadRibbonScroll { background: transparent; border: none; }
+QWidget[linuxcadRole="ribbon-content"] { background: transparent; }
+QWidget[linuxcadRole="ribbon-group"] { background: transparent; }
+
+QToolButton[linuxcadRole="ribbon-button"] {
+    color: #1A1F26;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+}
+
+QToolButton[linuxcadRole="ribbon-button"]:hover {
+    background: #FFFFFF;
+    border-color: #DCE0E5;
+}
+
+QToolButton[linuxcadRole="ribbon-button"]:pressed,
+QToolButton[linuxcadRole="ribbon-button"]:checked {
+    background: #E8F1FB;
+    border-color: #2F7BD0;
+}
+
+QFrame[linuxcadRole="ribbon-divider"],
+QFrame[linuxcadRole="ribbon-inner-sep"] {
+    color: #DCE0E5; background: #DCE0E5; max-width: 1px;
+}
+
+QLabel[linuxcadRole="ribbon-group-label"] {
+    color: #4B5563; font-size: 10px;
+}
+
+QDockWidget[linuxcadRole="tree-dock"]::title,
+QDockWidget[linuxcadRole="props-dock"]::title {
+    background: #FFFFFF;
+    color: #1A1F26;
+    padding: 6px 10px;
+    border-bottom: 1px solid #DCE0E5;
+    font-weight: 600;
+}
+
+QWidget[linuxcadRole="view-widgets"] {
+    background: rgba(255, 255, 255, 230);
+    border: 1px solid #DCE0E5;
+    border-radius: 16px;
+    padding: 4px;
+}
+
+QToolButton[linuxcadRole="view-widget-btn"] {
+    background: transparent; color: #1A1F26;
+    border: 1px solid transparent; border-radius: 12px;
+    padding: 4px 8px; min-width: 24px; min-height: 24px;
+}
+
+QToolButton[linuxcadRole="view-widget-btn"]:hover {
+    background: #F1F3F5; border-color: #DCE0E5;
+}
+
+QToolButton[linuxcadRole="ai-status"] {
+    color: #1A1F26;
+    background: #E8F1FB;
+    border: 1px solid #BFD8F0;
+    border-radius: 10px;
+    padding: 2px 10px;
+    font-weight: 600;
+}
+
+QToolButton[linuxcadRole="ai-status"][state="idle"]     { color: #2F7BD0; }
+QToolButton[linuxcadRole="ai-status"][state="thinking"] { color: #1D5FAA; border-color: #2F7BD0; }
+QToolButton[linuxcadRole="ai-status"][state="error"]    { color: #B0322F; border-color: #E0A0A0; background: #FBEAEA; }
+QToolButton[linuxcadRole="ai-status"][state="disabled"] { color: #8A93A1; background: #FAFBFC; border-color: #DCE0E5; }
+
+QFrame[linuxcadRole="ai-toast"] {
+    background: rgba(255, 255, 255, 240);
+    border: 1px solid #BFD8F0;
+    border-radius: 12px;
+}
+
+QLabel[linuxcadRole="ai-toast-title"] { color: #1A1F26; font-weight: 600; font-size: 13px; }
+QLabel[linuxcadRole="ai-toast-sub"]   { color: #4B5563; font-size: 11px; }
+
+QToolButton[linuxcadRole="ai-toast-button"] {
+    color: #1A1F26;
+    background: #FFFFFF;
+    border: 1px solid #DCE0E5;
+    border-radius: 6px;
+    padding: 4px 10px;
+}
+
+QToolButton[linuxcadRole="ai-toast-button"][primary="true"] {
+    background: #2F7BD0; color: #FFFFFF; border-color: #1D5FAA;
+}
+
+QDialog[linuxcadRole="cheat-sheet"] {
+    background: #FFFFFF;
+    border: 1px solid #DCE0E5;
+    border-radius: 8px;
+}
+
+QLineEdit[linuxcadRole="cheat-sheet-input"] {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+}
+
+QLabel[linuxcadRole="cheat-sheet-section"] {
+    color: #2F7BD0;
+    font-weight: 700;
+    padding: 8px 4px 4px 4px;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+}
+
+QLabel[linuxcadRole="cheat-sheet-key"] {
+    color: #1A1F26;
+    background: #F1F3F5;
+    border: 1px solid #DCE0E5;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+QLabel[linuxcadRole="cheat-sheet-name"] { color: #1A1F26; }

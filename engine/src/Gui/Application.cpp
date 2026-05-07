@@ -81,6 +81,7 @@
 #include "GuiInitScript.h"
 #include "InputHintPy.h"
 #include "LinkViewPy.h"
+#include "LinuxCAD/Theme.h"
 #include "MainWindow.h"
 #include "Macro.h"
 #include "PreferencePackManager.h"
@@ -2703,7 +2704,12 @@ void Application::setStyleSheet(const QString& qssFile, bool tiledBackground)
 
             QString styleSheetContent = replaceVariablesInQss(str.readAll());
 
-            qApp->setStyleSheet(defaultStyleSheet + QStringLiteral("\n") + styleSheetContent);
+            // Append LinuxCAD's chrome QSS last so our top bar / ribbon / docks
+            // keep their branded look when FreeCAD reloads its theme.
+            const QString lcad = Gui::LinuxCAD::Theme::currentStylesheet();
+            qApp->setStyleSheet(defaultStyleSheet + QStringLiteral("\n")
+                                + styleSheetContent
+                                + (lcad.isEmpty() ? QString() : QStringLiteral("\n") + lcad));
 
             ActionStyleEvent e(ActionStyleEvent::Clear);
             qApp->sendEvent(mw, &e);
@@ -2730,14 +2736,17 @@ void Application::setStyleSheet(const QString& qssFile, bool tiledBackground)
         }
     }
     else {
+        const QString lcad = Gui::LinuxCAD::Theme::currentStylesheet();
+        const QString combined = defaultStyleSheet
+                                 + (lcad.isEmpty() ? QString() : QStringLiteral("\n") + lcad);
         if (tiledBackground) {
-            qApp->setStyleSheet(defaultStyleSheet);
+            qApp->setStyleSheet(combined);
             ActionStyleEvent e(ActionStyleEvent::Restore);
             qApp->sendEvent(getMainWindow(), &e);
             mdi->setBackground(QPixmap(QLatin1String("images:background.png")));
         }
         else {
-            qApp->setStyleSheet(defaultStyleSheet);
+            qApp->setStyleSheet(combined);
             ActionStyleEvent e(ActionStyleEvent::Restore);
             qApp->sendEvent(getMainWindow(), &e);
             mdi->setBackground(QBrush(QColor(160, 160, 160)));

@@ -2,14 +2,17 @@
 #
 # This subdirectory is included from src/Gui/CMakeLists.txt and contributes
 # its sources to the FreeCADGui shared library. It owns the LinuxCAD-branded
-# chrome (top bar, project manager dock, welcome screen, theme, command
-# palette) without modifying FreeCAD's modeling UI.
+# chrome (top bar, ribbon, project manager dock, welcome screen, theme,
+# command palette, navigation polish, AI copilot) without modifying
+# FreeCAD's modeling UI.
 
 set(LINUXCAD_SOURCES
     LinuxCadShell.cpp
     LinuxCadShell.h
     TopBar.cpp
     TopBar.h
+    Ribbon.cpp
+    Ribbon.h
     ProjectManagerDock.cpp
     ProjectManagerDock.h
     WelcomeScreen.cpp
@@ -22,6 +25,30 @@ set(LINUXCAD_SOURCES
     Theme.h
     CommandPalette.cpp
     CommandPalette.h
+    NaviCubeDefaults.cpp
+    NaviCubeDefaults.h
+    ViewWidgetsOverlay.cpp
+    ViewWidgetsOverlay.h
+    Shortcuts.cpp
+    Shortcuts.h
+    CheatSheet.cpp
+    CheatSheet.h
+    AI/Provider.cpp
+    AI/Provider.h
+    AI/OpenAIProvider.cpp
+    AI/OpenAIProvider.h
+    AI/AnthropicProvider.cpp
+    AI/AnthropicProvider.h
+    AI/ContextBuilder.cpp
+    AI/ContextBuilder.h
+    AI/ToolRegistry.cpp
+    AI/ToolRegistry.h
+    AI/SuggestionEngine.cpp
+    AI/SuggestionEngine.h
+    AI/GhostToast.cpp
+    AI/GhostToast.h
+    AI/Consent.cpp
+    AI/Consent.h
 )
 
 set(LINUXCAD_RESOURCES

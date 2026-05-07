@@ -39,6 +39,7 @@ public Q_SLOTS:
     void refresh();
 
 private Q_SLOTS:
+    void onNewSketch();
     void onNewProject();
     void onOpenProject();
     void onRecentDoubleClicked(QListWidgetItem* item);
@@ -50,6 +51,7 @@ private:
     ProjectManager* manager_     = nullptr;
     QLabel*         heroLabel_   = nullptr;
     QListWidget*    recentList_  = nullptr;
+    QPushButton*    sketchBtn_   = nullptr;
     QPushButton*    newBtn_      = nullptr;
     QPushButton*    openBtn_     = nullptr;
     QPushButton*    startBtn_    = nullptr;

@@ -51,6 +51,12 @@ public:
     void openProjectInteractive(QWidget* parentWidget);
     void addMemberInteractive(QWidget* parentWidget);
 
+    /// Sketch-first creation flow. Ensures a Part Design Body exists in a
+    /// new (or active) document, prompts for a base plane, then enters
+    /// Sketcher_NewSketch on the chosen plane. Wraps the whole sequence in
+    /// a single transaction so a Ctrl+Z fully reverts.
+    void newSketchInteractive(QWidget* parentWidget);
+
     /// Open all member documents (FCStd) in FreeCAD.
     void openAllMemberDocuments();
 

@@ -220,6 +220,7 @@ void Gui::SoFCDB::init()
     SolidWorksNavigationStyle ::init();
     TinkerCADNavigationStyle ::init();
     TouchpadNavigationStyle ::init();
+    LinuxCadNavigationStyle ::init();
 
     GLGraphicsItem ::init();
     GLFlagWindow ::init();

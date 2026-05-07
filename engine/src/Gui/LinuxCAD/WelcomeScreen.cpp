@@ -74,8 +74,13 @@ void WelcomeScreen::buildUi()
 
     leftLayout->addSpacing(20);
 
+    sketchBtn_ = new QPushButton(tr("New Sketch  (S)"), left);
+    sketchBtn_->setProperty("linuxcadRole", QStringLiteral("welcome-cta-primary"));
+    sketchBtn_->setToolTip(tr("Pick a plane and start sketching - the fastest path to a model"));
+    leftLayout->addWidget(sketchBtn_);
+
     newBtn_ = new QPushButton(tr("New Project"), left);
-    newBtn_->setProperty("linuxcadRole", QStringLiteral("welcome-cta-primary"));
+    newBtn_->setProperty("linuxcadRole", QStringLiteral("welcome-cta"));
     leftLayout->addWidget(newBtn_);
 
     openBtn_ = new QPushButton(tr("Open Project..."), left);
@@ -121,11 +126,22 @@ void WelcomeScreen::buildUi()
     outer->addWidget(right, 1);
 
     // --- Connections -----------------------------------------------------
-    connect(newBtn_,   &QPushButton::clicked, this, &WelcomeScreen::onNewProject);
-    connect(openBtn_,  &QPushButton::clicked, this, &WelcomeScreen::onOpenProject);
-    connect(startBtn_, &QPushButton::clicked, this, &WelcomeScreen::onOpenStartWorkbench);
+    connect(sketchBtn_, &QPushButton::clicked, this, &WelcomeScreen::onNewSketch);
+    connect(newBtn_,    &QPushButton::clicked, this, &WelcomeScreen::onNewProject);
+    connect(openBtn_,   &QPushButton::clicked, this, &WelcomeScreen::onOpenProject);
+    connect(startBtn_,  &QPushButton::clicked, this, &WelcomeScreen::onOpenStartWorkbench);
     connect(recentList_, &QListWidget::itemDoubleClicked,
             this, &WelcomeScreen::onRecentDoubleClicked);
+}
+
+void WelcomeScreen::onNewSketch()
+{
+    if (manager_ != nullptr) {
+        manager_->newSketchInteractive(this);
+        // The welcome screen hides itself once a document opens; the
+        // shell-level signalNewDocument hook will refresh it accordingly.
+        close();
+    }
 }
 
 void WelcomeScreen::refresh()

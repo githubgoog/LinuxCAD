@@ -35,6 +35,15 @@ public:
     static QString variantToString(Variant v);
     static Variant variantFromString(const QString& s);
 
+    /// Return the QSS string for the user's persisted variant, or empty for
+    /// "system". Safe to call before any Theme instance has been constructed
+    /// because it reads the persisted setting directly. Used by FreeCAD's
+    /// stylesheet pipeline to append our rules so they survive theme reloads.
+    static QString currentStylesheet();
+
+    /// Return the QSS string for the requested variant.
+    static QString stylesheetFor(Variant v);
+
 private:
     QString loadStylesheet(Variant v) const;
 

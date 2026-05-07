@@ -39,10 +39,15 @@ public Q_SLOTS:
     /// Update save indicator state.
     void onActiveDocumentChanged();
 
+    /// Update the AI status badge to reflect an integer state value
+    /// matching `Gui::LinuxCAD::SuggestionEngine::State`.
+    void onAiStateChanged(int state);
+
 private Q_SLOTS:
     void onProjectButtonClicked();
     void onWorkbenchSelectionChanged(int index);
     void onCommandPaletteRequested();
+    void onAiBadgeClicked();
     void onUndo();
     void onRedo();
     void onQuickSearchEdited(const QString& text);
@@ -59,6 +64,7 @@ private:
     QToolButton* undoButton_         = nullptr;
     QToolButton* redoButton_         = nullptr;
     QLabel*      saveIndicator_      = nullptr;
+    QToolButton* aiBadge_            = nullptr;
     QToolButton* userButton_         = nullptr;
 
     bool         updatingSwitcher_   = false;
