@@ -49,6 +49,10 @@ set(LINUXCAD_SOURCES
     AI/GhostToast.h
     AI/Consent.cpp
     AI/Consent.h
+    AI/MockProvider.cpp
+    AI/MockProvider.h
+    AI/ConfigureAiDialog.cpp
+    AI/ConfigureAiDialog.h
 )
 
 set(LINUXCAD_RESOURCES

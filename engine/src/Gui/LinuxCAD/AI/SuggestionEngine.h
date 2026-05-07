@@ -44,6 +44,9 @@ public:
     /// Stop observing and cancel any in-flight request.
     void stop();
 
+    /// Replace the active provider and rewire signals without recreating the engine.
+    void setProvider(Provider* provider);
+
     State state() const { return state_; }
 
     /// Total requests sent during this app session (for rate limit checks).
