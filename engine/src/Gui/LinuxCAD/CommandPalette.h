@@ -22,6 +22,8 @@ namespace LinuxCAD {
 ///
 /// Lists every registered FreeCAD command, fuzzy-filters them by name,
 /// menu text and tooltip, and runs the chosen one via Command::invoke.
+/// Type \c "?" or \c shortcuts in the query (or use an initial query starting
+/// with those) to open the curated keyboard shortcuts list grouped by category.
 class GuiExport CommandPalette : public QDialog
 {
     Q_OBJECT
@@ -31,6 +33,8 @@ public:
     ~CommandPalette() override;
 
 public Q_SLOTS:
+    /// Opens the palette; passing \c "?" opens directly into the shortcuts view
+    /// (same for an initial query that starts with \c "shortcuts").
     void showPalette(const QString& initialQuery = QString());
 
 protected:
@@ -42,8 +46,15 @@ private Q_SLOTS:
     void onItemActivated(QListWidgetItem* item);
 
 private:
+    enum class Mode
+    {
+        Commands,
+        Shortcuts
+    };
+
     void buildUi();
     void rebuildIndex();
+    void rebuildShortcutsView();
     // NB: not "runCommand" - that name is a function-like macro in
     // Gui/Command.h which would mangle this declaration once that header
     // is included transitively (e.g. via LinuxCadShell.cpp).
@@ -52,6 +63,7 @@ private:
     QLineEdit*   query_     = nullptr;
     QListWidget* list_      = nullptr;
     QLabel*      footer_    = nullptr;
+    Mode         mode_      = Mode::Commands;
 
     struct Entry {
         Gui::Command* cmd;

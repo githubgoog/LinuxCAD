@@ -31,8 +31,6 @@ set(LINUXCAD_SOURCES
     ViewWidgetsOverlay.h
     Shortcuts.cpp
     Shortcuts.h
-    CheatSheet.cpp
-    CheatSheet.h
     AI/Provider.cpp
     AI/Provider.h
     AI/OpenAIProvider.cpp
