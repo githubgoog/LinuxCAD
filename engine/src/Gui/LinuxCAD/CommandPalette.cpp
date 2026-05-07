@@ -4,20 +4,25 @@
 #ifndef _PreComp_
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QMap>
 #include <QShowEvent>
+#include <QStringList>
 #include <QVBoxLayout>
 #endif
 
 #include <Base/Console.h>
+#include <Gui/Action.h>
 #include <Gui/Application.h>
 #include <Gui/BitmapFactory.h>
 #include <Gui/Command.h>
 
 #include "CommandPalette.h"
+#include "Shortcuts.h"
 
 namespace Gui {
 namespace LinuxCAD {
@@ -46,6 +51,16 @@ bool fuzzyMatch(const QString& haystack, const QString& needle)
         ++hi;
     }
     return ni == needle.size();
+}
+
+bool shortcutEntryMatchesFilter(const ShortcutEntry& e, const QString& needle)
+{
+    if (needle.isEmpty()) {
+        return true;
+    }
+    const QString hay = QString::fromUtf8(e.friendlyName) + QLatin1Char(' ')
+        + QString::fromLatin1(e.keySequence) + QLatin1Char(' ') + QString::fromUtf8(e.commandName);
+    return hay.contains(needle, Qt::CaseInsensitive);
 }
 
 } // namespace
@@ -136,8 +151,21 @@ void CommandPalette::showEvent(QShowEvent* event)
 
 void CommandPalette::onQueryChanged(const QString& q)
 {
+    const QString trimmed = q.trimmed();
+    if (trimmed == QLatin1String("?")
+        || trimmed.compare(QLatin1String("shortcuts"), Qt::CaseInsensitive) == 0
+        || trimmed.startsWith(QLatin1String("shortcuts "), Qt::CaseInsensitive)) {
+        mode_ = Mode::Shortcuts;
+        rebuildShortcutsView();
+        if (list_->count() > 0) {
+            list_->setCurrentRow(0);
+        }
+        return;
+    }
+
+    mode_ = Mode::Commands;
     list_->clear();
-    const QString needle = q.trimmed().toLower();
+    const QString needle = trimmed.toLower();
     int added = 0;
     for (const auto& e : all_) {
         if (e.menuText.isEmpty() && e.name.isEmpty()) {
@@ -154,7 +182,15 @@ void CommandPalette::onQueryChanged(const QString& q)
         }
         auto* item = new QListWidgetItem(list_);
         const QString title = e.menuText.isEmpty() ? e.name : e.menuText;
-        item->setText(title);
+        QString keyText;
+        if (auto* act = e.cmd ? e.cmd->getAction() : nullptr) {
+            keyText = act->shortcut().toString(QKeySequence::NativeText);
+        }
+        QString rowText = title;
+        if (!keyText.isEmpty()) {
+            rowText = title + QStringLiteral("  \u2009  ") + keyText;
+        }
+        item->setText(rowText);
         if (!e.tooltip.isEmpty() && e.tooltip != title) {
             item->setToolTip(e.tooltip);
         }
@@ -181,11 +217,77 @@ void CommandPalette::onItemActivated(QListWidgetItem* item)
     if (!item) {
         return;
     }
+    if (mode_ == Mode::Shortcuts) {
+        if (item->data(Qt::UserRole + 1).toString() == QLatin1String("header")) {
+            return;
+        }
+        const QString cmdName = item->data(Qt::UserRole).toString();
+        if (cmdName.isEmpty()) {
+            return;
+        }
+        auto* app = Gui::Application::Instance;
+        if (!app) {
+            return;
+        }
+        auto* cmd = app->commandManager().getCommandByName(cmdName.toUtf8().constData());
+        if (!cmd) {
+            return;
+        }
+        executeSelected(cmd);
+        return;
+    }
     auto* cmd = static_cast<Gui::Command*>(item->data(Qt::UserRole).value<void*>());
     if (!cmd) {
         return;
     }
     executeSelected(cmd);
+}
+
+void CommandPalette::rebuildShortcutsView()
+{
+    list_->clear();
+    const QString trimmed = query_->text().trimmed();
+    QString filter;
+    if (trimmed == QLatin1String("?")) {
+        filter.clear();
+    } else if (trimmed.compare(QLatin1String("shortcuts"), Qt::CaseInsensitive) == 0) {
+        filter.clear();
+    } else if (trimmed.startsWith(QLatin1String("shortcuts "), Qt::CaseInsensitive)) {
+        filter = trimmed.mid(QStringLiteral("shortcuts ").size()).trimmed();
+    }
+
+    QMap<QString, QList<ShortcutEntry>> grouped;
+    QStringList categoryOrder;
+    for (const auto& e : Shortcuts::curated()) {
+        if (!shortcutEntryMatchesFilter(e, filter)) {
+            continue;
+        }
+        const QString cat = QString::fromUtf8(e.category);
+        if (!grouped.contains(cat)) {
+            categoryOrder.append(cat);
+        }
+        grouped[cat].append(e);
+    }
+
+    if (grouped.isEmpty()) {
+        auto* none = new QListWidgetItem(tr("No shortcuts match this filter."), list_);
+        none->setFlags(Qt::NoItemFlags);
+        return;
+    }
+
+    for (const auto& cat : categoryOrder) {
+        auto* headerItem = new QListWidgetItem(cat.toUpper(), list_);
+        headerItem->setFlags(Qt::ItemIsEnabled);
+        headerItem->setData(Qt::UserRole + 1, QStringLiteral("header"));
+
+        for (const auto& e : grouped.value(cat)) {
+            auto* row = new QListWidgetItem(list_);
+            const QString friendly = QString::fromUtf8(e.friendlyName);
+            const QString keys = QString::fromLatin1(e.keySequence);
+            row->setText(friendly + QStringLiteral("  \u2009  ") + keys);
+            row->setData(Qt::UserRole, QString::fromUtf8(e.commandName));
+        }
+    }
 }
 
 void CommandPalette::keyPressEvent(QKeyEvent* event)
