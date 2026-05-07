@@ -73,6 +73,22 @@ SuggestionEngine::~SuggestionEngine()
     stop();
 }
 
+void SuggestionEngine::setProvider(Provider* provider)
+{
+    if (provider_ != nullptr && provider_->inFlight()) {
+        provider_->cancel();
+    }
+    if (provider_ != nullptr) {
+        disconnect(provider_.data(), nullptr, this, nullptr);
+    }
+    provider_ = provider;
+    if (provider != nullptr) {
+        connect(provider, &Provider::responded, this, &SuggestionEngine::onProviderResponded);
+        connect(provider, &Provider::stateChanged, this, &SuggestionEngine::onProviderStateChanged);
+    }
+    setState(provider && provider->isConfigured() ? State::Idle : State::Disabled);
+}
+
 void SuggestionEngine::setState(State s)
 {
     if (state_ != s) {

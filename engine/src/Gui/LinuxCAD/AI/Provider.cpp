@@ -7,6 +7,7 @@
 #endif
 
 #include "Provider.h"
+#include "MockProvider.h"
 #include "OpenAIProvider.h"
 #include "AnthropicProvider.h"
 
@@ -30,6 +31,9 @@ Provider* Provider::createFromSettings(QObject* parent)
     QSettings s;
     const QString kind = s.value(QString::fromLatin1(kSettingProvider),
                                  QStringLiteral("openai-compatible")).toString();
+    if (kind.compare(QStringLiteral("mock"), Qt::CaseInsensitive) == 0) {
+        return new MockProvider(parent);
+    }
     if (kind.compare(QStringLiteral("anthropic"), Qt::CaseInsensitive) == 0) {
         return new AnthropicProvider(parent);
     }
