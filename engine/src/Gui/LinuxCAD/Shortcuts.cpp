@@ -56,6 +56,8 @@ const std::vector<ShortcutEntry>& curatedRef()
         {"Std_Redo",             "Ctrl+Shift+Z","Files", "Redo"},
 
         // LinuxCAD chrome
+        {"", "Tab", "AI", "Accept inline AI ghost suggestion"},
+        {"", "Esc", "AI", "Dismiss inline AI ghost suggestion"},
         {"Std_DlgPreferences",   "Ctrl+,",   "LinuxCAD", "Preferences"},
     };
     return kEntries;

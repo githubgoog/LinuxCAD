@@ -205,6 +205,10 @@ QToolButton[linuxcadRole="ai-status"][state="thinking"] { color: #1D5FAA; border
 QToolButton[linuxcadRole="ai-status"][state="error"]    { color: #B0322F; border-color: #E0A0A0; background: #FBEAEA; }
 QToolButton[linuxcadRole="ai-status"][state="disabled"] { color: #8A93A1; background: #FAFBFC; border-color: #DCE0E5; }
 
+QToolButton[linuxcadRole="ai-status"][linuxcadAiMock="true"] {
+    border: 1px dashed #F59E0B;
+}
+
 QFrame[linuxcadRole="ai-toast"] {
     background: rgba(255, 255, 255, 240);
     border: 1px solid #BFD8F0;

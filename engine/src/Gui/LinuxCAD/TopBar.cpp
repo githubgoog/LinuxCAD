@@ -11,6 +11,7 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QPixmap>
+#include <QSettings>
 #include <QShortcut>
 #include <QSize>
 #include <QSizePolicy>
@@ -28,7 +29,9 @@
 #include <Gui/MainWindow.h>
 
 #include "AI/ConfigureAiDialog.h"
+#include "AI/Provider.h"
 #include "CommandPalette.h"
+#include "FirstRunWizard.h"
 #include "LinuxCadShell.h"
 #include "ProjectManager.h"
 #include "Ribbon.h"
@@ -217,6 +220,16 @@ void TopBar::buildLogoMenu()
         }
     };
 
+    menu->addAction(tr("Re-run setup wizard…"), [] {
+        QWidget* mw = Gui::getMainWindow();
+        if (Shell::instance() && Shell::instance()->mainWindow()) {
+            mw = Shell::instance()->mainWindow();
+        }
+        FirstRunWizard::runAgain(mw);
+    });
+
+    menu->addSeparator();
+
     menu->addAction(tr("New Sketch... (S)"), [this] {
         if (auto* sh = Shell::instance()) {
             sh->newSketchInteractive();
@@ -363,22 +376,66 @@ void TopBar::onQuickSearchEdited(const QString& text)
     }
 }
 
+void TopBar::setRibbonRowInteractive(bool enabled)
+{
+    if (row2_ != nullptr) {
+        row2_->setEnabled(enabled);
+    }
+}
+
 void TopBar::onAiStateChanged(int state)
 {
     if (aiBadge_ == nullptr) {
         return;
     }
+
     QString stateStr = QStringLiteral("disabled");
     QString label    = tr("AI");
-    QString tip      = tr("AI assistant disabled - click to configure");
+    QString tip      = tr("AI assistant disabled — click to configure");
     switch (state) {
-        case 0: stateStr = QStringLiteral("disabled"); label = tr("AI");          tip = tr("AI assistant disabled"); break;
-        case 1: stateStr = QStringLiteral("idle");     label = tr("AI \xc2\xb7 Ready");  tip = tr("AI assistant idle - changes will trigger suggestions"); break;
-        case 2: stateStr = QStringLiteral("thinking"); label = tr("AI \xc2\xb7 ...");    tip = tr("AI assistant thinking"); break;
-        case 3: stateStr = QStringLiteral("idle");     label = tr("AI \xc2\xb7 Ready");  tip = tr("AI cooled off, will resume on next change"); break;
-        case 4: stateStr = QStringLiteral("error");    label = tr("AI \xc2\xb7 Error");  tip = tr("AI assistant ran into an error - click for details"); break;
-        default: break;
+        case 0:
+            stateStr = QStringLiteral("disabled");
+            label    = tr("AI");
+            tip      = tr("AI assistant disabled — click to configure");
+            break;
+        case 1:
+            stateStr = QStringLiteral("idle");
+            label    = QStringLiteral("\u2022 AI ready");
+            tip      = tr("AI assistant idle — edits will trigger suggestions");
+            break;
+        case 2:
+            stateStr = QStringLiteral("thinking");
+            label    = QStringLiteral("\u2022 AI …");
+            tip      = tr("AI assistant thinking");
+            break;
+        case 3:
+            stateStr = QStringLiteral("idle");
+            label    = QStringLiteral("\u2022 AI ready");
+            tip      = tr("Brief cool-off — next edit may trigger suggestions");
+            break;
+        case 4:
+            stateStr = QStringLiteral("error");
+            label    = QStringLiteral("\u2022 AI error");
+            tip      = tr("AI error — click to reconfigure");
+            break;
+        default:
+            break;
     }
+
+    QSettings qs;
+    const bool mockProvider =
+        qs.value(QString::fromLatin1(Provider::kSettingProvider), QString())
+            .compare(QStringLiteral("mock"), Qt::CaseInsensitive)
+        == 0;
+    aiBadge_->setProperty(QStringLiteral("linuxcadAiMock"), mockProvider);
+
+    if (mockProvider && (state == 0 || state == 1 || state == 2 || state == 3)) {
+        label = QStringLiteral("\u2022 AI mock");
+        tip =
+            tip + QLatin1Char('\n')
+            + tr("(Mock provider — requests stay offline with canned geometry hints.)");
+    }
+
     aiBadge_->setText(label);
     aiBadge_->setProperty("state", stateStr);
     aiBadge_->setToolTip(tip);

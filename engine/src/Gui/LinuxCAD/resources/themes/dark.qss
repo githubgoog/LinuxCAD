@@ -336,6 +336,10 @@ QToolButton[linuxcadRole="ai-status"][state="thinking"] { color: #9BC6F0; border
 QToolButton[linuxcadRole="ai-status"][state="error"]    { color: #F08080; border-color: #663030; }
 QToolButton[linuxcadRole="ai-status"][state="disabled"] { color: #6B7280; border-color: #2C333D; background: #1B2027; }
 
+QToolButton[linuxcadRole="ai-status"][linuxcadAiMock="true"] {
+    border: 1px dashed #F59E0B;
+}
+
 QToolButton[linuxcadRole="ai-status"]:hover { background: #232C42; }
 
 /* ---------- Ghost-toast AI suggestion ------------------------------- */

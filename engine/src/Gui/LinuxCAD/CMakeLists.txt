@@ -25,6 +25,8 @@ set(LINUXCAD_SOURCES
     ProjectManager.h
     Theme.cpp
     Theme.h
+    FirstRunWizard.cpp
+    FirstRunWizard.h
     CommandPalette.cpp
     CommandPalette.h
     NaviCubeDefaults.cpp

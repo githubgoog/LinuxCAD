@@ -46,6 +46,9 @@ public:
     void setRibbonBody(Ribbon* ribbon);
     Ribbon* ribbonBody() const;
 
+    /// Ribbon row reacts to documents: inactive when none are open (plan).
+    void setRibbonRowInteractive(bool enabled);
+
 public Q_SLOTS:
     /// Retained as a no-op so existing connections (e.g. document changes)
     /// continue to compile after the save indicator was removed.

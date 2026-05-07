@@ -19,6 +19,7 @@
 #include "AI/Provider.h"
 #include "AI/SuggestionEngine.h"
 #include "CommandPalette.h"
+#include "FirstRunWizard.h"
 #include "LinuxCadShell.h"
 #include "NaviCubeDefaults.h"
 #include "ProjectManager.h"
@@ -220,10 +221,15 @@ void install(Gui::MainWindow* mw)
             static_cast<int>(g_instance->suggestionEngine_->state()));
     }
 
+    // First-run onboarding (theme / units / navigation / AI) shown once.
+    QTimer::singleShot(400, mw, [mw]() {
+        FirstRunWizard::promptIfNeeded(mw);
+    });
+
     // First-run consent prompt - deferred so it shows over a fully painted
     // main window. If the user accepts, recreate the suggestion engine so
     // it picks up the freshly enabled state.
-    QTimer::singleShot(1500, mw, [mw]() {
+    QTimer::singleShot(4600, mw, [mw]() {
         Consent::promptIfNeeded(mw);
         if (auto* sh = Shell::instance()) {
             if (sh->suggestionEngine() != nullptr) {
@@ -258,6 +264,9 @@ void install(Gui::MainWindow* mw)
                 else {
                     ws->showCentered();
                 }
+            }
+            if (auto* tb = sh->topBar()) {
+                tb->setRibbonRowInteractive(anyDocumentOpen());
             }
         }
     };
