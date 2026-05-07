@@ -427,7 +427,7 @@ void TopBar::onAiStateChanged(int state)
         qs.value(QString::fromLatin1(Provider::kSettingProvider), QString())
             .compare(QStringLiteral("mock"), Qt::CaseInsensitive)
         == 0;
-    aiBadge_->setProperty(QStringLiteral("linuxcadAiMock"), mockProvider);
+    aiBadge_->setProperty("linuxcadAiMock", mockProvider);
 
     if (mockProvider && (state == 0 || state == 1 || state == 2 || state == 3)) {
         label = QStringLiteral("\u2022 AI mock");

@@ -303,7 +303,7 @@ private:
     QCheckBox* aiEnableCb_ = nullptr;
 };
 
-void FirstRunWizard::promptIfNeeded(QWidget* parent)
+void promptIfNeededImpl(QWidget* parent)
 {
     QSettings s;
     if (s.value(QLatin1String(FirstRunWizard::kCompletedKey), false).toBool()) {
@@ -316,7 +316,7 @@ void FirstRunWizard::promptIfNeeded(QWidget* parent)
     }
 }
 
-void FirstRunWizard::runAgain(QWidget* parent)
+void runAgainImpl(QWidget* parent)
 {
     QSettings s;
     s.remove(QLatin1String(FirstRunWizard::kCompletedKey));
@@ -328,6 +328,16 @@ void FirstRunWizard::runAgain(QWidget* parent)
 }
 
 } // namespace
+
+void FirstRunWizard::promptIfNeeded(QWidget* parent)
+{
+    promptIfNeededImpl(parent);
+}
+
+void FirstRunWizard::runAgain(QWidget* parent)
+{
+    runAgainImpl(parent);
+}
 
 } // namespace LinuxCAD
 } // namespace Gui
