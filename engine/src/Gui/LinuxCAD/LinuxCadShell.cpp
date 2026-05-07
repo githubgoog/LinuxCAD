@@ -2,15 +2,8 @@
 
 #include "PreCompiled.h"
 #ifndef _PreComp_
-#include <QApplication>
 #include <QDockWidget>
-#include <QMenuBar>
-#include <QPointer>
-#include <QSettings>
-#include <QShortcut>
-#include <QStatusBar>
 #include <QTimer>
-#include <QToolBar>
 #endif
 
 #include <App/Application.h>
@@ -25,7 +18,6 @@
 #include "AI/GhostToast.h"
 #include "AI/Provider.h"
 #include "AI/SuggestionEngine.h"
-#include "CheatSheet.h"
 #include "CommandPalette.h"
 #include "LinuxCadShell.h"
 #include "NaviCubeDefaults.h"
@@ -52,23 +44,6 @@ void enableDockPreferenceGroup(const char* group, bool enabled)
                       ->GetGroup("DockWindows")
                       ->GetGroup(group);
     handle->SetBool("Enabled", enabled);
-}
-
-void applyDefaultNavigationStyleOnce()
-{
-    QSettings s;
-    const QString flagKey = QStringLiteral("LinuxCAD/NavStyleAppliedV1");
-    if (s.value(flagKey, false).toBool()) {
-        return;
-    }
-    auto view = App::GetApplication().GetParameterGroupByPath(
-        "User parameter:BaseApp/Preferences/View");
-    if (view) {
-        view->SetASCII("NavigationStyle", "Gui::LinuxCadNavigationStyle");
-    }
-    s.setValue(flagKey, true);
-    Base::Console().log("LinuxCAD: default navigation style set to "
-                        "Gui::LinuxCadNavigationStyle\n");
 }
 
 QDockWidget* findDockByObjectName(Gui::MainWindow* mw, const char* widgetObjectName)
@@ -106,26 +81,6 @@ void brandDock(QDockWidget* dock, const QString& title, const QString& role)
     }
 }
 
-void hideClassicTopToolbars(Gui::MainWindow* mw)
-{
-    if (mw == nullptr) {
-        return;
-    }
-    for (auto* tb : mw->findChildren<QToolBar*>()) {
-        if (tb == nullptr) {
-            continue;
-        }
-        const QString name = tb->objectName();
-        if (name.startsWith(QStringLiteral("LinuxCad"))) {
-            continue;
-        }
-        tb->setVisible(false);
-        if (auto* viewAct = tb->toggleViewAction()) {
-            viewAct->setVisible(false);
-        }
-    }
-}
-
 bool anyDocumentOpen()
 {
     return !App::GetApplication().getDocuments().empty();
@@ -143,10 +98,30 @@ Shell* shell()
     return g_instance;
 }
 
-void Shell::showCheatSheet()
+void Shell::reloadAiProvider()
 {
-    if (cheatSheet_ != nullptr) {
-        cheatSheet_->showOverlay();
+    Provider* fresh = Provider::createFromSettings(mainWindow_);
+    if (suggestionEngine_) {
+        suggestionEngine_->stop();
+        suggestionEngine_->deleteLater();
+        suggestionEngine_ = nullptr;
+    }
+    if (aiProvider_ && aiProvider_ != fresh) {
+        aiProvider_->deleteLater();
+    }
+    aiProvider_ = fresh;
+    suggestionEngine_ = new SuggestionEngine(aiProvider_, ghostToast_, mainWindow_);
+    QObject::connect(suggestionEngine_, &SuggestionEngine::stateChanged, topBar_,
+                     [](SuggestionEngine::State s) {
+                         if (auto* sh = Shell::instance()) {
+                             if (auto* tb = sh->topBar()) {
+                                 tb->onAiStateChanged(static_cast<int>(s));
+                             }
+                         }
+                     });
+    suggestionEngine_->start();
+    if (topBar_ != nullptr) {
+        topBar_->onAiStateChanged(static_cast<int>(suggestionEngine_->state()));
     }
 }
 
@@ -185,10 +160,8 @@ void install(Gui::MainWindow* mw)
     mw->addToolBar(Qt::TopToolBarArea, g_instance->topBar_);
     g_instance->topBar_->setObjectName(QStringLiteral("LinuxCadTopBar"));
 
-    // --- Ribbon (row 2) -------------------------------------------------
-    mw->addToolBarBreak(Qt::TopToolBarArea);
-    g_instance->ribbon_ = new Ribbon(mw);
-    mw->addToolBar(Qt::TopToolBarArea, g_instance->ribbon_);
+    // --- Ribbon (QWidget; Wave 2 TopBar embeds, not a MainWindow QToolBar) ---
+    g_instance->ribbon_ = new Ribbon(g_instance->topBar_);
 
     // --- Project manager dock (left) ------------------------------------
     g_instance->projectDock_ = new ProjectManagerDock(g_instance->projectManager_, mw);
@@ -222,33 +195,11 @@ void install(Gui::MainWindow* mw)
     // --- Command palette (Ctrl+K) ---------------------------------------
     g_instance->commandPalette_ = new CommandPalette(mw);
 
-    // --- Cheat-sheet overlay (Pillar 4) ---------------------------------
-    g_instance->cheatSheet_ = new CheatSheet(g_instance->commandPalette_, mw);
-
     // --- Curated keyboard shortcuts (Pillar 4) --------------------------
     Shortcuts::applyDefaults();
 
-    // Global ? and Ctrl+/ shortcuts for the cheat sheet, anywhere in the app.
-    auto* scQuestion = new QShortcut(QKeySequence(QStringLiteral("?")), mw);
-    scQuestion->setContext(Qt::ApplicationShortcut);
-    QObject::connect(scQuestion, &QShortcut::activated, mw, []() {
-        if (auto* sh = Shell::instance()) {
-            sh->showCheatSheet();
-        }
-    });
-    auto* scSlash = new QShortcut(QKeySequence(QStringLiteral("Ctrl+/")), mw);
-    scSlash->setContext(Qt::ApplicationShortcut);
-    QObject::connect(scSlash, &QShortcut::activated, mw, []() {
-        if (auto* sh = Shell::instance()) {
-            sh->showCheatSheet();
-        }
-    });
-
     // --- NaviCube defaults (Pillar 2) -----------------------------------
     NaviCubeDefaults::applyOnce();
-
-    // --- Default navigation style (Pillar 3) ----------------------------
-    applyDefaultNavigationStyleOnce();
 
     // --- View widgets overlay (Pillar 2) --------------------------------
     g_instance->viewWidgets_ = new ViewWidgetsOverlay(mw);
@@ -257,8 +208,8 @@ void install(Gui::MainWindow* mw)
     g_instance->aiProvider_ = Provider::createFromSettings(mw);
     g_instance->ghostToast_ = new GhostToast(mw);
     g_instance->suggestionEngine_ = new SuggestionEngine(g_instance->aiProvider_,
-                                                          g_instance->ghostToast_,
-                                                          mw);
+                                                         g_instance->ghostToast_,
+                                                         mw);
     QObject::connect(
         g_instance->suggestionEngine_, &SuggestionEngine::stateChanged,
         g_instance->topBar_, [](SuggestionEngine::State s) {
@@ -291,14 +242,8 @@ void install(Gui::MainWindow* mw)
         }
     });
 
-    // --- Hide FreeCAD's classic chrome ----------------------------------
-    if (auto* mb = mw->menuBar()) {
-        mb->setVisible(false);
-    }
     QTimer::singleShot(0, mw, []() {
         if (auto* sh = Shell::instance()) {
-            hideClassicTopToolbars(sh->mainWindow());
-            // Keep our own top bars visible.
             if (auto* tb = sh->topBar()) {
                 tb->setVisible(true);
             }

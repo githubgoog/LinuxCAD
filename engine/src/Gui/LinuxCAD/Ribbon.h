@@ -3,7 +3,7 @@
 #define GUI_LINUXCAD_RIBBON_H
 
 #include <FCGlobal.h>
-#include <QToolBar>
+#include <QWidget>
 
 class QHBoxLayout;
 class QScrollArea;
@@ -21,7 +21,7 @@ namespace LinuxCAD {
 ///
 /// The ribbon never owns the QActions - it just shows them - so all clicks
 /// flow through FreeCAD's existing CommandManager unchanged.
-class GuiExport Ribbon : public QToolBar
+class GuiExport Ribbon : public QWidget
 {
     Q_OBJECT
 

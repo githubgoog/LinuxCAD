@@ -25,7 +25,6 @@ class WelcomeScreen;
 class ProjectManager;
 class Theme;
 class CommandPalette;
-class CheatSheet;
 class ViewWidgetsOverlay;
 class SuggestionEngine;
 class GhostToast;
@@ -54,13 +53,12 @@ public:
     ProjectManager*     projectManager() const { return projectManager_; }
     Theme*              theme() const { return theme_; }
     CommandPalette*     commandPalette() const { return commandPalette_; }
-    CheatSheet*         cheatSheet() const { return cheatSheet_; }
     SuggestionEngine*   suggestionEngine() const { return suggestionEngine_; }
     GhostToast*         ghostToast() const { return ghostToast_; }
     Provider*           aiProvider() const { return aiProvider_; }
 
-    /// Show the keyboard cheat-sheet overlay. Routed from TopBar / shortcuts.
-    void showCheatSheet();
+    /// Recreate the AI Provider from settings and attach it to SuggestionEngine.
+    void reloadAiProvider();
 
     /// Open the sketch-first creation flow (pick plane + Sketcher_NewSketch).
     void newSketchInteractive();
@@ -81,7 +79,6 @@ private:
     ProjectManager*     projectManager_  = nullptr;
     Theme*              theme_           = nullptr;
     CommandPalette*     commandPalette_  = nullptr;
-    CheatSheet*         cheatSheet_      = nullptr;
     ViewWidgetsOverlay* viewWidgets_     = nullptr;
     SuggestionEngine*   suggestionEngine_= nullptr;
     GhostToast*         ghostToast_      = nullptr;

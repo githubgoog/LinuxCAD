@@ -72,14 +72,14 @@ QToolButton* makeRibbonButton(QAction* action, QWidget* parent)
 } // namespace
 
 Ribbon::Ribbon(QWidget* parent)
-    : QToolBar(parent)
+    : QWidget(parent)
 {
     setObjectName(QStringLiteral("LinuxCadRibbon"));
-    setWindowTitle(tr("LinuxCAD Ribbon"));
-    setMovable(false);
-    setFloatable(false);
     setProperty("linuxcadRole", QStringLiteral("ribbon"));
-    setIconSize(QSize(28, 28));
+
+    auto* outer = new QHBoxLayout(this);
+    outer->setContentsMargins(0, 0, 0, 0);
+    outer->setSpacing(0);
 
     scroll_ = new QScrollArea(this);
     scroll_->setObjectName(QStringLiteral("LinuxCadRibbonScroll"));
@@ -97,7 +97,7 @@ Ribbon::Ribbon(QWidget* parent)
     row_->addStretch();
 
     scroll_->setWidget(content_);
-    addWidget(scroll_);
+    outer->addWidget(scroll_);
 
     // Subscribe to workbench activation. FreeCAD signals via boost::signals2;
     // any throw escaping the slot would tear down the application, so we
@@ -128,7 +128,7 @@ void Ribbon::scheduleRebuild()
 
 bool Ribbon::shouldSkipToolBar(QToolBar* tb) const
 {
-    if (tb == nullptr || tb == this) {
+    if (tb == nullptr) {
         return true;
     }
     if (isLinuxCadChrome(tb->objectName())) {
