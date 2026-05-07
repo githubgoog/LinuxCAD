@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="${LINUXCAD_ROOT:-$SCRIPT_DIR}"
+
+# If invoked from ~/.local/bin (or another copied location), auto-detect the
+# canonical repo path used on this machine.
+if [ ! -x "$ROOT_DIR/build/build-linux.sh" ] && [ ! -x "$ROOT_DIR/build/build-mac.sh" ]; then
+    if [ -x "/home/sabastian/Coding/LinuxCAD/build/build-linux.sh" ] || [ -x "/home/sabastian/Coding/LinuxCAD/build/build-mac.sh" ]; then
+        ROOT_DIR="/home/sabastian/Coding/LinuxCAD"
+    elif [ -x "/home/sabastian/Coding/Linux CAD/build/build-linux.sh" ] || [ -x "/home/sabastian/Coding/Linux CAD/build/build-mac.sh" ]; then
+        ROOT_DIR="/home/sabastian/Coding/Linux CAD"
+    fi
+fi
+
+find_linuxcad_bin() {
+    local candidates=(
+        "$ROOT_DIR/build/_out/bin/LinuxCAD"
+        "$ROOT_DIR/build/_out/bin/FreeCAD"
+        "$ROOT_DIR/build/_out/src/Main/FreeCADMain"
+        "$ROOT_DIR/build/_install/bin/LinuxCAD"
+        "$ROOT_DIR/build/_install/bin/FreeCAD"
+        "$ROOT_DIR/build/_install/MacOS/LinuxCAD.app/Contents/MacOS/LinuxCAD"
+        "$ROOT_DIR/build/_install/LinuxCAD.app/Contents/MacOS/LinuxCAD"
+    )
+
+    local c
+    for c in "${candidates[@]}"; do
+        if [ -x "$c" ]; then
+            printf "%s\n" "$c"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+build_if_needed() {
+    local os
+    os="$(uname -s)"
+    case "$os" in
+        Linux)
+            echo "LinuxCAD binary not found. Building for Linux..."
+            "$ROOT_DIR/build/build-linux.sh"
+            ;;
+        Darwin)
+            echo "LinuxCAD binary not found. Building for macOS..."
+            "$ROOT_DIR/build/build-mac.sh"
+            ;;
+        MINGW*|MSYS*|CYGWIN*|Windows_NT)
+            echo "LinuxCAD binary not found. Build on Windows with:"
+            echo "  pwsh build/build-win.ps1"
+            return 1
+            ;;
+        *)
+            echo "Unsupported OS: $os"
+            return 1
+            ;;
+    esac
+}
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    cat <<'EOF'
+LinuxCAD launcher
+
+Usage:
+  ./linuxcad [args passed to the app]
+
+Behavior:
+  - Finds an existing LinuxCAD/FreeCAD binary in build output dirs.
+  - If missing, auto-runs the platform build script.
+EOF
+    exit 0
+fi
+
+if [ ! -x "$ROOT_DIR/build/build-linux.sh" ] && [ ! -x "$ROOT_DIR/build/build-mac.sh" ]; then
+    echo "Build scripts not found. Are you in the LinuxCAD repo root?"
+    exit 1
+fi
+
+BIN_PATH="$(find_linuxcad_bin || true)"
+if [ -z "$BIN_PATH" ]; then
+    build_if_needed
+    BIN_PATH="$(find_linuxcad_bin || true)"
+fi
+
+if [ -z "$BIN_PATH" ]; then
+    echo "Build finished but no runnable LinuxCAD binary was found."
+    echo "Expected one of:"
+    echo "  build/_out/bin/FreeCAD"
+    echo "  build/_out/bin/LinuxCAD"
+    echo "  build/_install/bin/FreeCAD"
+    echo "  build/_install/bin/LinuxCAD"
+    exit 1
+fi
+
+echo "Launching: $BIN_PATH"
+exec "$BIN_PATH" "$@"
+

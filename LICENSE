@@ -1,0 +1,29 @@
+LinuxCAD - friendly CAD powered by FreeCAD's engine
+Copyright (C) 2026 LinuxCAD contributors
+
+LinuxCAD is a downstream fork of FreeCAD. The FreeCAD source tree under
+FreeCAD-main/ is licensed under the GNU Lesser General Public License,
+version 2.1 or (at your option) any later version. See
+FreeCAD-main/LICENSE for the full text of that license.
+
+LinuxCAD's own additions under:
+  - FreeCAD-main/src/Gui/LinuxCAD/
+  - branding/
+  - build/
+  - packaging/
+  - patches/
+
+are likewise licensed under the GNU Lesser General Public License,
+version 2.1 or (at your option) any later version, so that they can be
+linked into the FreeCADGui library without license incompatibility.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, see <https://www.gnu.org/licenses/>.
+
+Third-party components and their licenses are documented in
+packaging/NOTICES.md.

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to publish (for example v0.3.1)'
+        description: 'Tag to publish (for example v1.0.0)'
         required: true
         type: string
 
@@ -23,69 +23,97 @@ jobs:
       matrix:
         include:
           - name: Linux
-            os: ubuntu-latest
-            buildScript: electron:build:linux
-            artifactPath: |
-              frontend/release/*.AppImage
-              frontend/release/*.deb
+            os: ubuntu-22.04
           - name: macOS
-            os: macos-latest
-            buildScript: electron:build:mac
-            artifactPath: |
-              frontend/release/*.dmg
-              frontend/release/*.zip
+            os: macos-13
           - name: Windows
-            os: windows-latest
-            buildScript: electron:build:win
-            artifactPath: |
-              frontend/release/*.exe
-              frontend/release/*.msi
-              frontend/release/*.zip
+            os: windows-2022
 
     env:
       CI: true
-      CSC_IDENTITY_AUTO_DISCOVERY: false
-      ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: true
+      LINUXCAD_VERSION: ${{ github.ref_name }}
+      LINUXCAD_BUILD_TYPE: Release
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          submodules: recursive
 
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build Rust backend
-        working-directory: backend-rust
-        run: cargo build --release
-
-      - name: Signing placeholders
-        shell: bash
+      - name: Install Linux deps
+        if: matrix.name == 'Linux'
         run: |
-          echo "Optional signing/notarization placeholders are documented in RELEASES.md."
-          echo "When secrets are configured in repository settings, electron-builder will use them during release packaging."
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential cmake ninja-build ccache git swig pkg-config \
+            qt6-base-dev qt6-base-dev-tools qt6-tools-dev qt6-tools-dev-tools \
+            qt6-svg-dev qt6-webengine-dev libqt6opengl6-dev libqt6openglwidgets6 \
+            libxerces-c-dev libboost-all-dev libeigen3-dev libpyside6-dev \
+            libshiboken6-dev pyside6-tools libcoin-dev libpcl-dev libgts-dev \
+            libocct-foundation-dev libocct-data-exchange-dev libocct-modeling-algorithms-dev \
+            libocct-modeling-data-dev libocct-ocaf-dev libocct-visualization-dev \
+            libmedc-dev libvtk9-dev libgmsh-dev libfmt-dev libyaml-cpp-dev \
+            libzipios++-dev python3-dev python3-matplotlib python3-pyside6.qtcore \
+            python3-pyside6.qtgui python3-pyside6.qtwidgets
 
-      - name: Build desktop package
-        working-directory: frontend
-        run: npm run ${{ matrix.buildScript }}
+      - name: Build & package (Linux)
+        if: matrix.name == 'Linux'
+        run: |
+          chmod +x build/build-linux.sh build/common.sh branding/apply-branding.sh \
+                   packaging/linux/build-appimage.sh packaging/linux/build-deb.sh
+          ./build/build-linux.sh --install
+          ./packaging/linux/build-deb.sh
+          ./packaging/linux/build-appimage.sh
+
+      - name: Install macOS deps
+        if: matrix.name == 'macOS'
+        run: |
+          brew update
+          brew install cmake ninja ccache qt@6 boost eigen swig coin3d \
+                       opencascade xerces-c fmt yaml-cpp pkg-config
+
+      - name: Build & package (macOS)
+        if: matrix.name == 'macOS'
+        run: |
+          chmod +x build/build-mac.sh build/common.sh branding/apply-branding.sh \
+                   packaging/macos/build-dmg.sh
+          ./build/build-mac.sh --install
+          ./packaging/macos/build-dmg.sh
+
+      - name: Cache LibPack (Windows)
+        if: matrix.name == 'Windows'
+        id: libpack-cache
+        uses: actions/cache@v4
+        with:
+          path: LibPack
+          key: linuxcad-libpack-2024.08-${{ runner.os }}
+
+      - name: Download FreeCAD LibPack (Windows)
+        if: matrix.name == 'Windows' && steps.libpack-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $url = "https://github.com/FreeCAD/FreeCAD-LibPack/releases/download/2024.08/LibPack-1.1.x-v3.0.0-Release.7z"
+          Invoke-WebRequest -Uri $url -OutFile LibPack.7z
+          7z x LibPack.7z -oLibPack
+
+      - name: Build & package (Windows)
+        if: matrix.name == 'Windows'
+        shell: pwsh
+        run: |
+          $libpack = (Get-ChildItem -Directory LibPack | Select-Object -First 1).FullName
+          pwsh build/build-win.ps1 -Install -LibPack "$libpack"
+          choco install nsis -y --no-progress
+          pwsh packaging/windows/build-nsis.ps1
 
       - name: Upload packaged artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linuxcad-${{ matrix.name }}
-          path: ${{ matrix.artifactPath }}
+          path: |
+            build/_packages/**/*.AppImage
+            build/_packages/**/*.deb
+            build/_packages/**/*.dmg
+            build/_packages/**/*.exe
           if-no-files-found: error
 
   publish:
@@ -101,7 +129,7 @@ jobs:
       - name: Flatten assets
         run: |
           mkdir -p release-assets
-          find dist-artifacts -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' -o -name '*.zip' -o -name '*.exe' -o -name '*.msi' \) -exec cp {} release-assets/ \;
+          find dist-artifacts -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' -o -name '*.exe' \) -exec cp {} release-assets/ \;
           ls -lah release-assets
 
       - name: Resolve release tag
