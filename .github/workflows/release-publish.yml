@@ -23,11 +23,7 @@ jobs:
       matrix:
         include:
           - name: Linux
-            os: ubuntu-22.04
-          - name: macOS
-            os: macos-13
-          - name: Windows
-            os: windows-2022
+            os: ubuntu-24.04
 
     env:
       CI: true
@@ -114,6 +110,8 @@ jobs:
             build/_packages/**/*.deb
             build/_packages/**/*.dmg
             build/_packages/**/*.exe
+            ~/.cache/linuxcad/**/_packages/**/*.AppImage
+            ~/.cache/linuxcad/**/_packages/**/*.deb
           if-no-files-found: error
 
   publish:
