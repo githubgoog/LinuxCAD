@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <!-- Isometric cube: top #2C323B, right #1B1F25, left #232830; chamfer highlight #F59E0B -->
+  <g stroke="#3A4150" stroke-width="1.5" stroke-linejoin="miter">
+    <!-- Right face -->
+    <path fill="#1B1F25" d="M206 104 L241 155 L156 222 L147.5 133.25 Z"/>
+    <!-- Left face -->
+    <path fill="#232830" d="M50 104 L15 155 L100 222 L108.5 133.25 Z"/>
+    <!-- Top face (chamfer replaces front corner) -->
+    <path fill="#2C323B" d="M128 65 L206 104 L147.5 133.25 L108.5 133.25 L50 104 Z"/>
+    <!-- Chamfer facet -->
+    <path fill="#F59E0B" stroke="#3A4150" d="M147.5 133.25 L128 143 L108.5 133.25 Z"/>
+  </g>
+</svg>

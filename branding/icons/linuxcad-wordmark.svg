@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="80" viewBox="0 0 320 80" fill="none">
+  <title>LinuxCAD wordmark</title>
+  <g transform="translate(8 12) scale(0.21875)">
+    <g stroke="#3A4150" stroke-width="1.5" stroke-linejoin="miter">
+      <path fill="#1B1F25" d="M206 104 L241 155 L156 222 L147.5 133.25 Z"/>
+      <path fill="#232830" d="M50 104 L15 155 L100 222 L108.5 133.25 Z"/>
+      <path fill="#2C323B" d="M128 65 L206 104 L147.5 133.25 L108.5 133.25 L50 104 Z"/>
+      <path fill="#F59E0B" stroke="#3A4150" d="M147.5 133.25 L128 143 L108.5 133.25 Z"/>
+    </g>
+  </g>
+  <text
+    x="72"
+    y="52"
+    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="28"
+    font-weight="600">
+    <tspan fill="#ECEEF1">Linux</tspan><tspan
+      fill="#ECEEF1"
+      stroke="#F59E0B"
+      stroke-width="0.85"
+      paint-order="stroke fill">C</tspan><tspan fill="#ECEEF1">AD</tspan>
+  </text>
+</svg>
