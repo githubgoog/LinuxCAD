@@ -1,24 +1,28 @@
 #!/usr/bin/env bash
-# LinuxCAD installer — downloads the latest AppImage from GitHub Releases and
-# registers it as a normal desktop application. No compiling, no apt packages.
+# LinuxCAD for Linux installer — downloads the latest AppImage from GitHub
+# Releases and registers it as a normal desktop application. No compiling,
+# no apt packages.
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.sh | bash
-#   bash install.sh                       # install / upgrade
-#   bash install.sh --uninstall           # remove
-#   bash install.sh --version v1.2.3      # pin a specific release tag
+#   bash install.sh                        # install / upgrade
+#   bash install.sh --uninstall            # remove
+#   bash install.sh --version v1.2.3       # pin a specific release tag
 #   bash install.sh --appimage-url <url>   # install from direct AppImage URL
 #   bash install.sh --local-appimage <path> # install from local AppImage file
+#   bash install.sh --no-purge             # don't remove old LinuxCAD installs
 #   LINUXCAD_REPO=user/fork bash install.sh
 #   LINUXCAD_APPIMAGE_URL=<url> bash install.sh
 #
 # What it does:
-#   1. Picks the right AppImage asset for your CPU (x86_64 or aarch64).
-#   2. Downloads to ~/.local/bin/LinuxCAD-<ver>-<arch>.AppImage and chmods +x.
-#   3. Installs a lightweight user launcher at ~/.local/bin/linuxcad.
-#   4. Writes ~/.local/share/applications/org.linuxcad.LinuxCAD.desktop.
-#   5. Extracts the AppImage's .DirIcon into ~/.local/share/icons/...
-#   6. Runs update-desktop-database / gtk-update-icon-cache when available.
+#   1. Removes any stale ~/.local/bin/LinuxCAD-*.AppImage and old launcher
+#      scripts (including root-owned ones from earlier installs).
+#   2. Picks the right AppImage asset for your CPU (x86_64 or aarch64).
+#   3. Downloads to ~/.local/bin/LinuxCAD-<ver>-<arch>.AppImage and chmods +x.
+#   4. Installs a lightweight user launcher at ~/.local/bin/linuxcad.
+#   5. Writes ~/.local/share/applications/org.linuxcad.LinuxCAD.desktop.
+#   6. Extracts the AppImage's .DirIcon into ~/.local/share/icons/...
+#   7. Runs update-desktop-database / gtk-update-icon-cache when available.
 #
 # After install: open your app menu and search "LinuxCAD".
 
@@ -29,10 +33,12 @@ VERSION_OVERRIDE=""
 APPIMAGE_URL_OVERRIDE="${LINUXCAD_APPIMAGE_URL:-}"
 LOCAL_APPIMAGE=""
 DO_UNINSTALL=0
+DO_PURGE=1
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --uninstall) DO_UNINSTALL=1 ;;
+        --no-purge) DO_PURGE=0 ;;
         --version=*) VERSION_OVERRIDE="${1#--version=}" ;;
         --version)
             shift
@@ -80,10 +86,41 @@ uninstall() {
     rm -f "$DESKTOP_FILE" "$ICON_FILE"
     rm -f "$LAUNCHER" "$USER_LAUNCHER" "$DEV_LAUNCHER" 2>/dev/null || true
     rm -f "$BIN_DIR"/LinuxCAD-*.AppImage 2>/dev/null || true
+    rm -f "$BIN_DIR"/LinuxCAD-for-Linux-*.AppImage 2>/dev/null || true
     if command -v update-desktop-database >/dev/null 2>&1; then
         update-desktop-database "$APPS_DIR" >/dev/null 2>&1 || true
     fi
     log "Done."
+}
+
+# Remove any stale LinuxCAD-*.AppImage and launcher script left behind by
+# earlier installs (including root-owned ones). The most common symptom this
+# fixes is a Chromium "/dev/shm permission" crash from the legacy Electron-era
+# AppImage that a previous installer left in ~/.local/bin/.
+purge_stale() {
+    [ "$DO_PURGE" = "1" ] || return 0
+    local removed=0 path
+    shopt -s nullglob
+    for path in "$BIN_DIR"/LinuxCAD-*.AppImage "$BIN_DIR"/LinuxCAD*.AppImage; do
+        [ -f "$path" ] || continue
+        if [ -w "$path" ] || rm -f "$path" 2>/dev/null; then
+            rm -f "$path" 2>/dev/null && removed=1
+        else
+            warn "stale AppImage requires sudo to remove: $path"
+            sudo rm -f "$path" 2>/dev/null && removed=1 || true
+        fi
+    done
+    shopt -u nullglob
+    for path in "$LAUNCHER" "$USER_LAUNCHER" "$DEV_LAUNCHER"; do
+        [ -e "$path" ] || continue
+        if [ -w "$path" ] || rm -f "$path" 2>/dev/null; then
+            rm -f "$path" 2>/dev/null && removed=1
+        else
+            warn "stale launcher requires sudo to remove: $path"
+            sudo rm -f "$path" 2>/dev/null && removed=1 || true
+        fi
+    done
+    [ "$removed" = "1" ] && log "Purged previous LinuxCAD install from $BIN_DIR" || true
 }
 
 if [ "$DO_UNINSTALL" = "1" ]; then
@@ -105,6 +142,8 @@ if ! command -v fusermount >/dev/null 2>&1 && ! command -v fusermount3 >/dev/nul
 fi
 
 mkdir -p "$BIN_DIR" "$APPS_DIR" "$ICON_DIR"
+
+purge_stale
 
 # ----- detect arch -----------------------------------------------------------
 
@@ -161,8 +200,14 @@ Try again after a release is published, or pass --appimage-url / --local-appimag
     fi
 
     # Fall back to scanning release assets for a matching AppImage filename.
+    # Prefer the new LinuxCAD-for-Linux-* naming, then fall back to legacy
+    # LinuxCAD-*.AppImage so older releases still install.
     if [ -z "$ASSET_URL" ]; then
-        ASSET_URL="$(grep -oE '"browser_download_url"[[:space:]]*:[[:space:]]*"[^"]+"' "$TMP/release.json"             | sed -E 's/.*"(https:[^"]+)"/\1/'             | grep -E "LinuxCAD.*${ARCH}.*\.AppImage$"             | head -1)"
+        ALL_URLS="$(grep -oE '"browser_download_url"[[:space:]]*:[[:space:]]*"[^"]+"' "$TMP/release.json"             | sed -E 's/.*"(https:[^"]+)"/\1/')"
+        ASSET_URL="$(printf '%s\n' "$ALL_URLS" | grep -E "LinuxCAD-for-Linux-.*${ARCH}\.AppImage$" | head -1)"
+        if [ -z "$ASSET_URL" ]; then
+            ASSET_URL="$(printf '%s\n' "$ALL_URLS" | grep -E "LinuxCAD.*${ARCH}.*\.AppImage$" | head -1)"
+        fi
     fi
 
     [ -n "$ASSET_URL" ] || die "no AppImage asset for $ARCH found in $REPO release"
@@ -203,7 +248,9 @@ pick_appimage() {
     fi
     local newest='' f
     shopt -s nullglob
-    for f in "$HOME/.local/bin"/LinuxCAD-*.AppImage "$HOME/.local/bin"/LinuxCAD*.AppImage; do
+    for f in "$HOME/.local/bin"/LinuxCAD-for-Linux-*.AppImage \
+             "$HOME/.local/bin"/LinuxCAD-*.AppImage \
+             "$HOME/.local/bin"/LinuxCAD*.AppImage; do
         [ -f "$f" ] || continue
         if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then
             newest="$f"
@@ -217,10 +264,16 @@ pick_appimage() {
 if [ "${1:-}" = '--self-check' ]; then
     echo 'LinuxCAD self-check'
     echo '-------------------'
+    echo "OS: $(uname -s)"
+    echo "Arch: $(uname -m)"
     echo "Safe mode: ${LINUXCAD_SAFE_MODE:-1}"
     appimg="$(pick_appimage || true)"
     [ -n "$appimg" ] && echo "AppImage: $appimg" || echo 'AppImage: not found in ~/.local/bin'
-    command -v fusermount >/dev/null 2>&1 || command -v fusermount3 >/dev/null 2>&1       && echo 'FUSE helper: yes' || echo 'FUSE helper: no (install libfuse2 if launch fails)'
+    if command -v fusermount >/dev/null 2>&1 || command -v fusermount3 >/dev/null 2>&1; then
+        echo 'FUSE helper: yes'
+    else
+        echo 'FUSE helper: no (install libfuse2 if launch fails)'
+    fi
     exit 0
 fi
 
@@ -232,7 +285,6 @@ fi
 
 chmod +x "$APPIMG" 2>/dev/null || true
 
-# Safer defaults for problematic GPUs; can be disabled via LINUXCAD_SAFE_MODE=0
 if [ "${LINUXCAD_SAFE_MODE:-1}" = '1' ]; then
     export LIBGL_ALWAYS_SOFTWARE=1
     export QT_OPENGL=software

@@ -80,7 +80,12 @@ node_modules/
 debug/
 .debug
 
-# Local CMake / install trees (do not commit)
+# Pixi managed environment & lockfile sentinels
+.pixi/
+# Build & packaging outputs (do not commit)
+dist/
+engine/build/
+# Legacy CMake / install trees from older build wrappers
 build/_out/
 build/_install/
 build/_packages/

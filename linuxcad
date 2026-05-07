@@ -1,26 +1,30 @@
 #!/usr/bin/env bash
-# LinuxCAD user launcher (AppImage-only).
+# LinuxCAD user launcher — Linux & macOS shim around the installed binary.
 #
 # Goals:
 # - Never compile or run a source build.
-# - Prefer stable user AppImage install path.
-# - Default to safe GPU settings to reduce hangs/crashes.
+# - Locate the installed product per OS:
+#     Linux  -> ~/.local/bin/LinuxCAD-*.AppImage  (or $LINUXCAD_APPIMAGE)
+#     macOS  -> /Applications/LinuxCAD.app
+# - Default to safer GPU settings on Linux to reduce 49%-startup-hang reports.
 #
 # Env vars:
 #   LINUXCAD_APPIMAGE=/path/to/LinuxCAD.AppImage
-#   LINUXCAD_SAFE_MODE=1   (default) force software OpenGL
-#   LINUXCAD_SAFE_MODE=0   disable software OpenGL
+#   LINUXCAD_SAFE_MODE=1 (default) | 0
+#
+# On Windows, this script is not used — install.ps1 creates Start menu and
+# Desktop shortcuts that point at LinuxCAD.bat / FreeCAD.exe directly.
 
 set -euo pipefail
 
-log()  { printf '[linuxcad] %s
-' "$*"; }
-warn() { printf '[linuxcad] %s
-' "$*" >&2; }
+OS="$(uname -s)"
+
+log()  { printf '[linuxcad] %s\n' "$*"; }
+warn() { printf '[linuxcad] %s\n' "$*" >&2; }
 
 usage() {
 cat <<'EOF'
-LinuxCAD launcher (user mode)
+LinuxCAD launcher
 
 Usage:
   linuxcad [app arguments]
@@ -28,85 +32,131 @@ Usage:
   linuxcad --help
 
 Behavior:
-  - Launches installed AppImage only (no source build fallback)
-  - Safe graphics mode is ON by default to avoid startup hangs
+  - Launches the installed LinuxCAD only (no source build fallback).
+  - On Linux, defaults to safe graphics mode (LINUXCAD_SAFE_MODE=1).
 EOF
 }
 
-pick_appimage() {
+pick_linux_appimage() {
     if [ -n "${LINUXCAD_APPIMAGE:-}" ] && [ -f "$LINUXCAD_APPIMAGE" ]; then
-        printf '%s
-' "$LINUXCAD_APPIMAGE"; return 0
+        printf '%s\n' "$LINUXCAD_APPIMAGE"; return 0
     fi
-
     local newest='' f
     shopt -s nullglob
-    for f in "$HOME/.local/bin"/LinuxCAD-*.AppImage "$HOME/.local/bin"/LinuxCAD*.AppImage; do
+    for f in "$HOME/.local/bin"/LinuxCAD-for-Linux-*.AppImage \
+             "$HOME/.local/bin"/LinuxCAD-*.AppImage \
+             "$HOME/.local/bin"/LinuxCAD*.AppImage; do
         [ -f "$f" ] || continue
         if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then
             newest="$f"
         fi
     done
     shopt -u nullglob
-
-    [ -n "$newest" ] && { printf '%s
-' "$newest"; return 0; }
+    [ -n "$newest" ] && { printf '%s\n' "$newest"; return 0; }
     return 1
+}
+
+pick_mac_bundle() {
+    local candidates=(
+        "${LINUXCAD_APP:-}"
+        "/Applications/LinuxCAD.app"
+        "$HOME/Applications/LinuxCAD.app"
+    )
+    local c
+    for c in "${candidates[@]}"; do
+        [ -n "$c" ] || continue
+        if [ -d "$c" ] && [ -x "$c/Contents/MacOS/LinuxCAD" ]; then
+            printf '%s\n' "$c/Contents/MacOS/LinuxCAD"; return 0
+        fi
+    done
+    return 1
+}
+
+resolve_target() {
+    case "$OS" in
+        Linux)  pick_linux_appimage ;;
+        Darwin) pick_mac_bundle ;;
+        *) return 1 ;;
+    esac
 }
 
 self_check() {
     echo 'LinuxCAD self-check'
     echo '-------------------'
-    echo "OS: $(uname -s)"
+    echo "OS: $OS"
     echo "Arch: $(uname -m)"
     echo "Safe mode: ${LINUXCAD_SAFE_MODE:-1}"
     echo "PATH has ~/.local/bin: $([[ ":$PATH:" == *":$HOME/.local/bin:"* ]] && echo yes || echo no)"
 
-    local appimg
-    appimg="$(pick_appimage || true)"
-    if [ -n "$appimg" ]; then
-        echo "AppImage: $appimg"
-        [ -x "$appimg" ] && echo 'Executable: yes' || echo 'Executable: no'
+    local target
+    if target="$(resolve_target)"; then
+        echo "Target: $target"
+        [ -x "$target" ] && echo 'Executable: yes' || echo 'Executable: no'
     else
-        echo 'AppImage: not found in ~/.local/bin'
+        echo 'Target: not found'
     fi
 
-    command -v fusermount >/dev/null 2>&1 || command -v fusermount3 >/dev/null 2>&1       && echo 'FUSE helper: yes' || echo 'FUSE helper: no (install libfuse2 if launch fails)'
+    case "$OS" in
+        Linux)
+            if command -v fusermount >/dev/null 2>&1 || command -v fusermount3 >/dev/null 2>&1; then
+                echo 'FUSE helper: yes'
+            else
+                echo 'FUSE helper: no (install libfuse2 if launch fails)'
+            fi
+            ;;
+    esac
 
-    echo
-    if [ -z "$appimg" ]; then
+    if [ -z "${target:-}" ]; then
+        echo
         echo 'Install command:'
-        echo '  curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.sh | bash'
+        case "$OS" in
+            Linux)
+                echo '  curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.sh | bash' ;;
+            Darwin)
+                echo '  curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.command | bash' ;;
+        esac
     fi
 }
 
-if [ "${1:-}" = '--help' ] || [ "${1:-}" = '-h' ]; then
-    usage
-    exit 0
-fi
-if [ "${1:-}" = '--self-check' ]; then
-    self_check
-    exit 0
-fi
+case "${1:-}" in
+    --help|-h) usage; exit 0 ;;
+    --self-check) self_check; exit 0 ;;
+esac
 
-APPIMG="$(pick_appimage || true)"
-if [ -z "$APPIMG" ]; then
-    warn 'No LinuxCAD AppImage found.'
-    warn 'Install with:'
-    warn '  curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.sh | bash'
+if ! TARGET="$(resolve_target)"; then
+    case "$OS" in
+        Linux)
+            warn 'No LinuxCAD AppImage found.'
+            warn 'Install with:'
+            warn '  curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.sh | bash'
+            ;;
+        Darwin)
+            warn 'No LinuxCAD.app found at /Applications.'
+            warn 'Install with:'
+            warn '  curl -fsSL https://raw.githubusercontent.com/githubgoog/LinuxCAD/main/install.command | bash'
+            ;;
+        *)
+            warn "Unsupported OS: $OS. Use install.ps1 on Windows."
+            ;;
+    esac
     exit 1
 fi
 
-if [ ! -x "$APPIMG" ]; then
-    chmod +x "$APPIMG" 2>/dev/null || true
-fi
+[ -x "$TARGET" ] || chmod +x "$TARGET" 2>/dev/null || true
 
-# Default to safe graphics mode to avoid 49% startup hangs on problematic GPUs.
+# Safer defaults for problematic GPUs on Linux. Ignored / harmless elsewhere.
 if [ "${LINUXCAD_SAFE_MODE:-1}" = '1' ]; then
-    export LIBGL_ALWAYS_SOFTWARE=1
-    export QT_OPENGL=software
-    export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
+    case "$OS" in
+        Linux)
+            export LIBGL_ALWAYS_SOFTWARE=1
+            export QT_OPENGL=software
+            export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
+            ;;
+        Darwin)
+            export QT_OPENGL=software
+            ;;
+    esac
 fi
 
-log "Launching AppImage: $APPIMG"
-exec "$APPIMG" "$@"
+log "Launching: $TARGET"
+exec "$TARGET" "$@"

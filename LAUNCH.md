@@ -1,61 +1,79 @@
 # LinuxCAD developer launch notes
 
-> **Most users should not need this file.** The recommended install path is
-> `bash install.sh` (see [README.md](README.md)). This document is for
-> contributors building LinuxCAD from source.
+> **Most users should not need this file.** The recommended path is one of
+> the per-OS installers in [README.md](README.md):
+> `install.sh` (Linux) / `install.command` (macOS) / `install.ps1` (Windows).
+> This document is for contributors building LinuxCAD from source via pixi.
 
-## Launcher resolution order
+## The two launchers
 
-`./linuxcad` is now a **user launcher**:
+| Script           | Purpose                                              |
+| ---------------- | ---------------------------------------------------- |
+| `./linuxcad`     | User launcher; runs the OS-installed product only.   |
+| `./linuxcad-dev` | Developer launcher; pixi-based build + run.          |
 
-1. `$LINUXCAD_APPIMAGE` if set and present.
-2. Newest `LinuxCAD-*.AppImage` under `~/.local/bin/` (installed by `install.sh`).
+`./linuxcad` resolves the installed product per OS:
 
-It does **not** attempt to compile from source. By default it enables safe
-software rendering (`LINUXCAD_SAFE_MODE=1`) to reduce GPU-related hangs.
+- **Linux** — newest `~/.local/bin/LinuxCAD-for-Linux-*.AppImage` (or
+  `$LINUXCAD_APPIMAGE`).
+- **macOS** — `/Applications/LinuxCAD.app` (or `$LINUXCAD_APP`).
+- **Windows** — handled by `install.ps1` shortcuts; the bash launcher
+  is not used.
 
-Use `./linuxcad --self-check` for a quick diagnostics summary.
+It defaults to safe software rendering on Linux
+(`LINUXCAD_SAFE_MODE=1`) to reduce 49%-startup-hang reports. Disable
+with `LINUXCAD_SAFE_MODE=0`.
 
-For contributors, use `./linuxcad-dev` (repo build + optional auto-build).
+`./linuxcad --self-check` prints a quick diagnostics summary on Linux
+and macOS.
 
-If you want to point the launcher at a specific AppImage:
+## Building from source (pixi)
 
-```bash
-export LINUXCAD_APPIMAGE="$HOME/Downloads/LinuxCAD-1.0.0-x86_64.AppImage"
-linuxcad
-```
-
-## Repository path
-
-Spaces in the path are fine — LinuxCAD's CMake patches (see
-[patches/README.md](patches/README.md)) quote paths through Python codegen
-and file-copy steps.
-
-If your path still trips up some external tool, the build scripts
-automatically place `build/_out` and `build/_install` under
-`$XDG_CACHE_HOME/linuxcad/build-<hash>/` whenever the repository path
-contains whitespace. Override with `LINUXCAD_BUILD_DIR` and
-`LINUXCAD_INSTALL_DIR` if you want a fixed location.
-
-## Building on Ubuntu/Debian
+A single recipe ([pixi.toml](pixi.toml)) produces the same build on
+Linux, macOS, and Windows. No `apt` / `brew` / `LibPack` involved —
+everything comes from `conda-forge`.
 
 ```bash
-bash scripts/install-linux-deps.sh   # build dependencies
-./build/build-linux.sh --install
+# One-time install of pixi.
+curl -fsSL https://pixi.sh/install.sh | bash
+
+# Build, install, and launch.
+./linuxcad-dev
+
+# Or, equivalently:
+pixi run linuxcad-release
+pixi run launch
 ```
 
-If the link step fails with `cannot find -lTKSTEP` (or similar `TK*`
-libraries), install OpenCASCADE **data exchange** dev files:
+To produce the OS-native artifact (`.AppImage` / `.dmg` / `.zip`) into
+`dist/`:
 
 ```bash
-sudo apt install libocct-data-exchange-dev
+pixi run package          # picks the right per-OS task automatically
+# or
+./linuxcad-dev --package
 ```
+
+## Common pixi tasks
+
+| Task                  | What it does                                    |
+| --------------------- | ----------------------------------------------- |
+| `apply-branding`      | Overlay `branding/icons/` onto the engine.      |
+| `configure-release`   | CMake configure using engine's conda preset.    |
+| `build-release`       | Compile.                                        |
+| `install-release`     | `cmake --install` into `.pixi/envs/default/`.   |
+| `linuxcad-release`    | The four steps above, in order.                 |
+| `package`             | Build the OS artifact into `dist/`.             |
+| `launch`              | Run the just-installed LinuxCAD.                |
+
+The pixi env (`.pixi/envs/default/`) takes ~3-4 GB on first install
+but is cached locally and in CI on subsequent runs.
 
 ## Menu / desktop shortcut for a dev build
 
-If you want a `.desktop` entry that launches your **local checkout's** build
-(rather than the user-installed AppImage), point `Exec` at the repo's
-`linuxcad-dev` script:
+If you want a `.desktop` entry that launches your **local checkout's**
+build rather than the OS-installed product, point `Exec` at
+`linuxcad-dev`:
 
 ```ini
 [Desktop Entry]
@@ -66,21 +84,18 @@ Icon=linuxcad
 Categories=Graphics;Engineering;3DGraphics;
 ```
 
-Drop into `~/.local/share/applications/` and run:
+Drop into `~/.local/share/applications/` and refresh:
 
 ```bash
 update-desktop-database ~/.local/share/applications
 ```
 
-The user-facing entry created by `install.sh` is independent of this and
-points at the AppImage.
+The user-facing entry created by `install.sh` is independent of this
+and points at the installed AppImage.
 
-## Python / Shiboken (optional warnings)
+## Repository path
 
-If CMake warns that `shiboken6` is missing, install PySide/Shiboken for
-Python 3 (package names vary by distro) or use pip:
-
-```bash
-sudo apt install python3-pip
-python3 -m pip install --user shiboken6 PySide6-Essentials
-```
+Spaces in the path are fine — every CMake/Python codegen path used by
+the engine is quoted (see [patches/README.md](patches/README.md)). The
+pixi build also writes intermediate artifacts under
+`engine/build/release/` regardless of where the repo lives.

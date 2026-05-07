@@ -1,0 +1,241 @@
+# LinuxCAD top-level pixi manifest.
+#
+# Single recipe. Same conda-forge packages on Linux, macOS, and Windows.
+# This intentionally mirrors engine/pixi.toml's dependency set (which is the
+# upstream FreeCAD recipe) so the root environment can configure, build,
+# install, and package the engine without dirtying the vendored source.
+#
+# Common tasks:
+#   pixi run linuxcad-release       # build + install LinuxCAD
+#   pixi run package                # produce the OS-native artifact
+#   pixi run launch                 # run the just-built LinuxCAD
+#
+# CI calls these directly. Local devs can do the same thing.
+
+[workspace]
+name = "LinuxCAD"
+version = "1.0.0"
+description = "Friendly CAD desktop app, built on the FreeCAD engine"
+authors = ["LinuxCAD contributors"]
+channels = ["freecad", "conda-forge"]
+platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64", "win-64"]
+requires-pixi = ">=0.48"
+
+# Mirrors engine/pixi.toml. Update these together when the engine is rebased.
+[dependencies]
+blinker = "*"
+calculix = "*"
+ccache = "*"
+cmake = "*"
+coin3d = "*"
+compilers = ">=1.10,<1.11"
+conda-devenv = "*"
+debugpy = "*"
+defusedxml = "*"
+docutils = "*"
+doxygen = "*"
+eigen = ">=3.3,<5"
+fmt = "*"
+freetype = "*"
+git = "*"
+graphviz = "*"
+hdf5 = "*"
+ifcopenshell = "*"
+lark = "*"
+libboost-devel = "*"
+lxml = "*"
+matplotlib = "*"
+nine = "*"
+ninja = "*"
+noqt5 = "*"
+numpy = ">=1.26,<1.27"
+occt = ">=7.8,<7.9"
+opencamlib = "*"
+opencv = "*"
+openssl = "*"
+pandas = "*"
+pcl = "*"
+pip = "*"
+pivy = "*"
+ply = "*"
+pre-commit = "*"
+pybind11 = "*"
+pycollada = "*"
+pyside6 = "*"
+python = ">=3.11,<3.12"
+pythonocc-core = "*"
+pyyaml = "*"
+qt6-main = ">=6.8,<6.9"
+requests = "*"
+scipy = "*"
+six = "*"
+smesh = "*"
+swig = "*"
+sympy = "*"
+tbb-devel = ">=2022,<2023"
+vtk = "*"
+xerces-c = "*"
+xlutils = "*"
+yaml-cpp = "*"
+zlib = "*"
+zstd = "*"
+
+[target.linux-64.dependencies]
+clang = "*"
+clangxx = "*"
+kernel-headers_linux-64 = "*"
+libdrm-cos7-x86_64 = "*"
+libselinux-cos7-x86_64 = "*"
+libsepol-cos7-x86_64 = "*"
+libspnav = "*"
+libx11-common-cos7-x86_64 = "*"
+libx11-cos7-x86_64 = "*"
+libxau-cos7-x86_64 = "*"
+libxcb-cos7-x86_64 = "*"
+libxdamage-cos7-x86_64 = "*"
+libxext-cos7-x86_64 = "*"
+libxfixes-cos7-x86_64 = "*"
+libxi-cos7-x86_64 = "*"
+libxi-devel-cos7-x86_64 = "*"
+libxxf86vm-cos7-x86_64 = "*"
+llvm-openmp = "*"
+mesa-dri-drivers-cos7-x86_64 = "*"
+mesa-libegl-cos7-x86_64 = "*"
+mesa-libegl-devel-cos7-x86_64 = "*"
+mesa-libgl-cos7-x86_64 = "*"
+mesa-libgl-devel-cos7-x86_64 = "*"
+mold = "*"
+pixman-cos7-x86_64 = "*"
+qt6-wayland = ">=6.8,<6.9"
+sed = "*"
+sysroot_linux-64 = "*"
+xcb-util-cursor = "==0.1.5"
+xorg-x11-server-common-cos7-x86_64 = "*"
+xorg-x11-server-xvfb-cos7-x86_64 = "*"
+xorg-xproto = "*"
+
+[target.linux-aarch64.dependencies]
+clang = "*"
+clangxx = "*"
+kernel-headers_linux-aarch64 = "*"
+libdrm-cos7-aarch64 = "*"
+libglvnd-cos7-aarch64 = "*"
+libglvnd-glx-cos7-aarch64 = "*"
+libselinux-cos7-aarch64 = "*"
+libsepol-cos7-aarch64 = "*"
+libspnav = "*"
+libx11-common-cos7-aarch64 = "*"
+libx11-cos7-aarch64 = "*"
+libxau-cos7-aarch64 = "*"
+libxcb-cos7-aarch64 = "*"
+libxdamage-cos7-aarch64 = "*"
+libxext-cos7-aarch64 = "*"
+libxfixes-cos7-aarch64 = "*"
+libxi-cos7-aarch64 = "*"
+libxi-devel-cos7-aarch64 = "*"
+libxxf86vm-cos7-aarch64 = "*"
+llvm-openmp = "*"
+mesa-dri-drivers-cos7-aarch64 = "*"
+mesa-khr-devel-cos7-aarch64 = "*"
+mesa-libegl-cos7-aarch64 = "*"
+mesa-libegl-devel-cos7-aarch64 = "*"
+mesa-libgbm-cos7-aarch64 = "*"
+mesa-libgl-cos7-aarch64 = "*"
+mesa-libgl-devel-cos7-aarch64 = "*"
+mesa-libglapi-cos7-aarch64 = "*"
+mold = "*"
+pixman-cos7-aarch64 = "*"
+qt6-wayland = ">=6.8,<6.9"
+sed = "*"
+sysroot_linux-aarch64 = "*"
+xcb-util-cursor = "==0.1.5"
+xorg-x11-server-common-cos7-aarch64 = "*"
+xorg-x11-server-xvfb-cos7-aarch64 = "*"
+xorg-xproto = "*"
+
+[target.osx-64.dependencies]
+sed = "*"
+
+[target.osx-arm64.dependencies]
+sed = "*"
+
+[target.win-64.dependencies]
+winpthreads-devel = "*"
+
+[pypi-dependencies]
+freecad-stubs = "*"
+
+# ---- Tasks ------------------------------------------------------------------
+#
+# Build flow (shared across OSes, dispatched by configure-release/etc.):
+#   apply-branding -> initialize -> configure-release -> build-release -> install-release
+#
+# Per-OS configure tasks live below; everything else is OS-agnostic and runs
+# from the engine/ directory so engine/CMakePresets.json works as-is.
+
+[tasks]
+initialize = { cmd = ["git", "submodule", "update", "--init", "--recursive"], cwd = "engine" }
+apply-branding = { cmd = ["bash", "branding/apply-branding.sh"] }
+build-release = { cmd = ["cmake", "--build", "build/release", "--config", "Release"], cwd = "engine" }
+install-release = { cmd = ["cmake", "--install", "build/release", "--config", "Release"], cwd = "engine", depends-on = ["build-release"] }
+
+# Top-level convenience: configure + build + install in one shot.
+linuxcad-release = [
+    { task = "apply-branding" },
+    { task = "configure-release" },
+    { task = "build-release" },
+    { task = "install-release" },
+]
+linuxcad = [{ task = "linuxcad-release" }]
+
+# Packaging — picks the right task for the current OS via target.<os>.tasks below.
+package = [{ task = "package-os" }]
+
+# Launch the just-installed LinuxCAD (resolves to OS-specific binary).
+launch = [{ task = "launch-os" }]
+
+[target.linux-64.tasks]
+configure-release = { cmd = [
+    "cmake", "--preset", "conda-linux-release",
+    "-DPACKAGE_NAME=LinuxCAD",
+    "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
+], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+package-os = { cmd = ["bash", "packaging/linux/build-appimage.sh"], depends-on = ["install-release"] }
+launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
+
+[target.linux-aarch64.tasks]
+configure-release = { cmd = [
+    "cmake", "--preset", "conda-linux-release",
+    "-DPACKAGE_NAME=LinuxCAD",
+    "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
+], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+package-os = { cmd = ["bash", "packaging/linux/build-appimage.sh"], depends-on = ["install-release"] }
+launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
+
+[target.osx-64.tasks]
+configure-release = { cmd = [
+    "cmake", "--preset", "conda-macos-release",
+    "-DPACKAGE_NAME=LinuxCAD",
+    "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
+], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+package-os = { cmd = ["bash", "packaging/macos/build-dmg.sh"], depends-on = ["install-release"] }
+launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
+
+[target.osx-arm64.tasks]
+configure-release = { cmd = [
+    "cmake", "--preset", "conda-macos-release",
+    "-DPACKAGE_NAME=LinuxCAD",
+    "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
+], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+package-os = { cmd = ["bash", "packaging/macos/build-dmg.sh"], depends-on = ["install-release"] }
+launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
+
+[target.win-64.tasks]
+configure-release = { cmd = [
+    "cmake", "--preset", "conda-windows-release",
+    "-DCMAKE_GENERATOR_PLATFORM=", "-DCMAKE_GENERATOR_TOOLSET=",
+    "-DPACKAGE_NAME=LinuxCAD",
+    "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
+], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+package-os = { cmd = ["pwsh", "-NoProfile", "-File", "packaging/windows/build-zip.ps1"], depends-on = ["install-release"] }
+launch-os = { cmd = [".pixi/envs/default/Library/bin/FreeCAD.exe"], depends-on = ["install-release"] }
