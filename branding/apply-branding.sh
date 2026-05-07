@@ -8,6 +8,16 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+if [ -x "$ROOT/branding/icons/build-icons.sh" ]; then
+    echo "branding: running build-icons.sh..."
+    bash "$ROOT/branding/icons/build-icons.sh"
+elif [ -f "$ROOT/branding/icons/build-icons.sh" ]; then
+    echo "branding: build-icons.sh skipped (not executable)" >&2
+else
+    echo "branding: build-icons.sh skipped (not present)" >&2
+fi
+
 ICONS_SRC="$ROOT/branding/icons"
 ICONS_DST="$ROOT/engine/src/Gui/Icons"
 

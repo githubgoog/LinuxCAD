@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <!-- Page + folded corner -->
+  <path fill="#232830" stroke="#3A4150" stroke-width="1.5" stroke-linejoin="miter"
+        d="M48 36 H168 L212 80 V228 H48 Z"/>
+  <path fill="#2C323B" stroke="#3A4150" stroke-width="1.5" stroke-linejoin="miter"
+        d="M168 36 V80 H212 Z"/>
+  <!-- Cube mark ~70%, centered slightly low -->
+  <g transform="translate(128 148) scale(0.7) translate(-128 -135)">
+    <g stroke="#3A4150" stroke-width="1.5" stroke-linejoin="miter">
+      <path fill="#1B1F25" d="M206 104 L241 155 L156 222 L147.5 133.25 Z"/>
+      <path fill="#232830" d="M50 104 L15 155 L100 222 L108.5 133.25 Z"/>
+      <path fill="#2C323B" d="M128 65 L206 104 L147.5 133.25 L108.5 133.25 L50 104 Z"/>
+      <path fill="#F59E0B" stroke="#3A4150" d="M147.5 133.25 L128 143 L108.5 133.25 Z"/>
+    </g>
+  </g>
+</svg>

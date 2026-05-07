@@ -1759,7 +1759,7 @@ void MainWindow::delayedStartup()
         auto safeModePopup = QMessageBox(
             QMessageBox::Information,
             tr("Safe mode enabled"),
-            tr("FreeCAD is now running in safe mode."),
+            tr("LinuxCAD is now running in safe mode."),
             QMessageBox::Ok
         );
         safeModePopup.setInformativeText(
@@ -2626,7 +2626,7 @@ void MainWindow::setWindowTitle(const QString& string)
     bool showVersion = hGen->GetBool("ShowVersionInTitle", true);
 
     if (showVersion) {
-        // set main window title with FreeCAD Version
+        // set main window title with application version
         title = QString::fromStdString(App::Application::getNameWithVersion());
     }
     else {

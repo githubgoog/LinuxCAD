@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <rect x="4" y="4" width="56" height="56" rx="8" ry="8" fill="#232830"/>
+  <!-- Chamfer facet only (amber triangle) -->
+  <path fill="#F59E0B" d="M46 10 L54 22 L22 42 Z"/>
+  <path fill="none" stroke="#3A4150" stroke-width="1.25" stroke-linejoin="miter"
+        d="M46 10 L54 22 L22 42 Z"/>
+</svg>

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=LinuxCAD
+GenericName=Computer-Aided Design
+Comment=AI-assisted parametric 3D modeling
+Exec=linuxcad --single-instance %F
+Terminal=false
+Type=Application
+Icon=linuxcad
+Categories=Graphics;Engineering;Science;3DGraphics;
+StartupNotify=true
+StartupWMClass=LinuxCAD
+MimeType=application/x-extension-fcstd;application/x-extension-fcstd1;
