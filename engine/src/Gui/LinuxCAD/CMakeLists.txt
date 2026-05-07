@@ -11,6 +11,8 @@ set(LINUXCAD_SOURCES
     LinuxCadShell.h
     TopBar.cpp
     TopBar.h
+    WorkbenchDropdownButton.cpp
+    WorkbenchDropdownButton.h
     Ribbon.cpp
     Ribbon.h
     ProjectManagerDock.cpp

@@ -6,23 +6,32 @@
 #include <QToolBar>
 
 class QAction;
-class QComboBox;
-class QLabel;
-class QToolButton;
 class QLineEdit;
+class QToolButton;
+class QVBoxLayout;
+class QWidget;
 
 namespace Gui {
 namespace LinuxCAD {
 
+class Ribbon;
+class WorkbenchDropdownButton;
+
 /// LinuxCAD top bar.
 ///
-/// Replaces the visual role of FreeCAD's classic QMenuBar + standard toolbar.
-/// Contains: project menu, workbench switcher, command palette opener,
-/// undo/redo, save indicator, and a user/profile area.
+/// Wave 2E rebuilds the top bar as a `QToolBar` whose only direct toolbar
+/// widget is a `QVBoxLayout`-hosted shell with exactly two rows:
 ///
-/// Implementation note: we are a QToolBar so we get docking + chrome handling
-/// for free, but our visual identity is configured via QSS to look like a
-/// modern app top bar rather than a Qt toolbar.
+///  - Row 1: logo button -> workbench dropdown -> quick-search (stretches)
+///           -> palette button -> spacer -> Undo / Redo -> AI badge -> user.
+///  - Row 2: a container that hosts the `Ribbon*` widget installed by
+///           `LinuxCadShell::install` via `setRibbonBody(...)`.
+///
+/// The previous separate Project dropdown, the QComboBox-based workbench
+/// switcher, and the save indicator label have been removed: the project
+/// menu now hangs off the logo button and the save state is reflected
+/// elsewhere in the shell. `onActiveDocumentChanged()` is preserved as a
+/// no-op slot so existing external connections still compile.
 class GuiExport TopBar : public QToolBar
 {
     Q_OBJECT
@@ -31,12 +40,15 @@ public:
     explicit TopBar(QWidget* parent = nullptr);
     ~TopBar() override;
 
+    /// Embed a Ribbon widget into the second row of the TopBar shell.
+    /// The ribbon's parent is reset to the row-2 container, so its layout
+    /// position follows the TopBar through docking / undocking.
+    void setRibbonBody(Ribbon* ribbon);
+    Ribbon* ribbonBody() const;
+
 public Q_SLOTS:
-    /// Refresh the workbench switcher when workbenches change.
-    void refreshWorkbenchList();
-    /// Highlight the active workbench when it changes.
-    void onWorkbenchActivated(const QString& name);
-    /// Update save indicator state.
+    /// Retained as a no-op so existing connections (e.g. document changes)
+    /// continue to compile after the save indicator was removed.
     void onActiveDocumentChanged();
 
     /// Update the AI status badge to reflect an integer state value
@@ -44,8 +56,6 @@ public Q_SLOTS:
     void onAiStateChanged(int state);
 
 private Q_SLOTS:
-    void onProjectButtonClicked();
-    void onWorkbenchSelectionChanged(int index);
     void onCommandPaletteRequested();
     void onAiBadgeClicked();
     void onUndo();
@@ -54,20 +64,27 @@ private Q_SLOTS:
 
 private:
     void buildLayout();
-    void buildProjectMenu();
+    void buildLogoMenu();
     QToolButton* makeIconButton(const char* iconName, const QString& tooltip, const char* slot);
 
-    QToolButton* projectButton_      = nullptr;
-    QComboBox*   workbenchSwitcher_  = nullptr;
-    QToolButton* paletteButton_      = nullptr;
-    QLineEdit*   quickSearch_        = nullptr;
-    QToolButton* undoButton_         = nullptr;
-    QToolButton* redoButton_         = nullptr;
-    QLabel*      saveIndicator_      = nullptr;
-    QToolButton* aiBadge_            = nullptr;
-    QToolButton* userButton_         = nullptr;
+    // --- Outer 2-row shell ----------------------------------------------
+    QWidget*     outer_           = nullptr;
+    QVBoxLayout* outerLayout_     = nullptr;
+    QWidget*     row1_            = nullptr;
+    QWidget*     row2_            = nullptr;
 
-    bool         updatingSwitcher_   = false;
+    // --- Row 1 widgets --------------------------------------------------
+    QToolButton*              logoButton_         = nullptr;
+    WorkbenchDropdownButton*  workbenchDropdown_  = nullptr;
+    QLineEdit*                quickSearch_        = nullptr;
+    QToolButton*              paletteButton_      = nullptr;
+    QToolButton*              undoButton_         = nullptr;
+    QToolButton*              redoButton_         = nullptr;
+    QToolButton*              aiBadge_            = nullptr;
+    QToolButton*              userButton_         = nullptr;
+
+    // --- Row 2 hosted ribbon -------------------------------------------
+    Ribbon*                   ribbonHosted_       = nullptr;
 };
 
 } // namespace LinuxCAD

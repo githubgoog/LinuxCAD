@@ -415,3 +415,166 @@ QLabel[linuxcadRole="cheat-sheet-key"] {
 QLabel[linuxcadRole="cheat-sheet-name"] {
     color: #E6EAF0;
 }
+
+/* ====================================================================
+ * Wave 2E - Fusion 2-row TopBar (charcoal + amber accent)
+ * --------------------------------------------------------------------
+ * Palette: charcoal-900 #14171C, charcoal-800 #1B1F25, charcoal-700 #232830,
+ *          charcoal-600 #2C323B, charcoal-500 #3A4150,
+ *          text-primary #ECEEF1, text-secondary #A8AEB8, accent #F59E0B.
+ * Targets are scoped via the toolbar object id and the role properties so
+ * none of FreeCAD's classic chrome is affected.
+ * ==================================================================== */
+
+QToolBar#LinuxCadTopBar[linuxcadRole="topbar"] {
+    background: #14171C;
+    border: none;
+    border-bottom: 1px solid #2C323B;
+    spacing: 0;
+    padding: 0;
+}
+
+QToolBar#LinuxCadTopBar[linuxcadRole="topbar"]::separator {
+    background: transparent;
+    width: 0;
+    margin: 0;
+}
+
+QWidget#topbar-outer[linuxcadRole="topbar-outer"] {
+    background: #14171C;
+}
+
+QWidget#topbar-row1 {
+    background: #14171C;
+    border-bottom: 1px solid #1B1F25;
+}
+
+QWidget#topbar-row2 {
+    background: #1B1F25;
+    min-height: 64px;
+}
+
+QToolButton#topbar-logo[linuxcadRole="topbar-logo"] {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+QToolButton#topbar-logo[linuxcadRole="topbar-logo"]:hover {
+    background: #1B1F25;
+    border-color: #2C323B;
+}
+
+QToolButton#topbar-logo[linuxcadRole="topbar-logo"]:pressed {
+    background: #232830;
+    border-color: #3A4150;
+}
+
+QToolButton#topbar-logo[linuxcadRole="topbar-logo"]::menu-indicator {
+    image: none;
+    width: 0;
+    height: 0;
+}
+
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"] {
+    color: #ECEEF1;
+    background: #1B1F25;
+    border: 1px solid #2C323B;
+    border-radius: 6px;
+    padding: 0;
+    min-width: 200px;
+    min-height: 28px;
+}
+
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"]:hover {
+    background: #232830;
+    border-color: #3A4150;
+}
+
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"]:pressed {
+    background: #2C323B;
+    border-color: #F59E0B;
+}
+
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"]::menu-indicator {
+    image: none;
+    width: 0;
+    height: 0;
+}
+
+QLabel[linuxcadRole="workbench-dropdown-icon"] {
+    background: transparent;
+}
+
+QLabel[linuxcadRole="workbench-dropdown-text"] {
+    color: #ECEEF1;
+    font-weight: 500;
+    background: transparent;
+}
+
+QLabel[linuxcadRole="workbench-dropdown-chevron"] {
+    color: #A8AEB8;
+    background: transparent;
+    padding-right: 2px;
+}
+
+QWidget#WorkbenchDropdownButton-popup[linuxcadRole="workbench-dropdown-popup"] {
+    background: #1B1F25;
+    border: 1px solid #3A4150;
+    border-radius: 8px;
+}
+
+QLineEdit#workbench-dropdown-filter {
+    background: #14171C;
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+    border-radius: 6px;
+    padding: 6px 8px;
+    selection-background-color: #F59E0B;
+    selection-color: #14171C;
+}
+
+QLineEdit#workbench-dropdown-filter:focus {
+    border-color: #F59E0B;
+}
+
+QListWidget#workbench-dropdown-list {
+    background: #1B1F25;
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+    border-radius: 6px;
+    padding: 4px;
+    outline: none;
+}
+
+QListWidget#workbench-dropdown-list::item {
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+QListWidget#workbench-dropdown-list::item:selected {
+    background: #2C323B;
+    color: #ECEEF1;
+    border-left: 2px solid #F59E0B;
+}
+
+QListWidget#workbench-dropdown-list::item:hover {
+    background: #232830;
+}
+
+QLineEdit#cmd-search,
+QLineEdit[linuxcadRole="cmd-search"] {
+    background: #1B1F25;
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+    border-radius: 6px;
+    padding: 4px 10px;
+    selection-background-color: #F59E0B;
+    selection-color: #14171C;
+}
+
+QLineEdit#cmd-search:focus,
+QLineEdit[linuxcadRole="cmd-search"]:focus {
+    border-color: #F59E0B;
+}

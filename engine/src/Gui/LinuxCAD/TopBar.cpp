@@ -4,37 +4,36 @@
 #ifndef _PreComp_
 #include <QAction>
 #include <QApplication>
-#include <QCheckBox>
-#include <QComboBox>
 #include <QDialog>
-#include <QDialogButtonBox>
-#include <QFormLayout>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QKeySequence>
-#include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
-#include <QSettings>
+#include <QPixmap>
 #include <QShortcut>
-#include <QSignalBlocker>
+#include <QSize>
+#include <QSizePolicy>
 #include <QStyle>
 #include <QToolButton>
-#include <QWidgetAction>
+#include <QVBoxLayout>
+#include <QWidget>
 #endif
 
 #include <App/Application.h>
-#include <App/Document.h>
 #include <Base/Console.h>
 #include <Gui/Application.h>
 #include <Gui/BitmapFactory.h>
 #include <Gui/Command.h>
-#include <Gui/Document.h>
 #include <Gui/MainWindow.h>
 
-#include "TopBar.h"
+#include "AI/ConfigureAiDialog.h"
 #include "CommandPalette.h"
 #include "LinuxCadShell.h"
 #include "ProjectManager.h"
+#include "Ribbon.h"
+#include "TopBar.h"
+#include "WorkbenchDropdownButton.h"
 
 namespace Gui {
 namespace LinuxCAD {
@@ -51,24 +50,8 @@ TopBar::TopBar(QWidget* parent)
 
     buildLayout();
 
-    // React to workbench changes so our switcher stays in sync with FreeCAD.
-    if (auto* app = Gui::Application::Instance) {
-        // Re-fill on construction; FreeCAD signals don't directly tell us when
-        // the workbench *list* changes, so we expose refreshWorkbenchList()
-        // for callers that know.
-        refreshWorkbenchList();
-
-        try {
-            app->signalActivateWorkbench.connect([this](const char* name) {
-                onWorkbenchActivated(QString::fromUtf8(name ? name : ""));
-            });
-        }
-        catch (...) {
-            // Defensive: never let a signal hookup break the UI.
-        }
-    }
-
-    // Global Ctrl+K shortcut for the command palette.
+    // Global Ctrl+K shortcut for the command palette. Parented to the
+    // toolbar (this) so the lifetime tracks the TopBar.
     auto* sc = new QShortcut(QKeySequence(QStringLiteral("Ctrl+K")), this);
     connect(sc, &QShortcut::activated, this, &TopBar::onCommandPaletteRequested);
 
@@ -85,77 +68,98 @@ TopBar::~TopBar() = default;
 
 void TopBar::buildLayout()
 {
-    // --- Project button (with dropdown menu) ----------------------------
-    projectButton_ = new QToolButton(this);
-    projectButton_->setText(tr("Project"));
-    projectButton_->setToolTip(tr("Project actions"));
-    projectButton_->setPopupMode(QToolButton::InstantPopup);
-    projectButton_->setProperty("linuxcadRole", QStringLiteral("topbar-project"));
-    buildProjectMenu();
-    addWidget(projectButton_);
+    // ------------------------------------------------------------------
+    // Outer shell: a single QWidget that fills the toolbar and hosts the
+    // two rows in a QVBoxLayout. We do NOT scatter many addWidget() calls
+    // on the toolbar itself; the toolbar gets exactly one addWidget(outer_).
+    // ------------------------------------------------------------------
+    outer_ = new QWidget(this);
+    outer_->setObjectName(QStringLiteral("topbar-outer"));
+    outer_->setProperty("linuxcadRole", QStringLiteral("topbar-outer"));
+    outer_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-    addSeparator();
+    outerLayout_ = new QVBoxLayout(outer_);
+    outerLayout_->setContentsMargins(2, 4, 2, 4);
+    outerLayout_->setSpacing(2);
 
-    // --- Workbench switcher ---------------------------------------------
-    auto* wbLabel = new QLabel(tr("Workbench"), this);
-    wbLabel->setProperty("linuxcadRole", QStringLiteral("topbar-label"));
-    wbLabel->setContentsMargins(8, 0, 4, 0);
-    addWidget(wbLabel);
+    // ------------------------------------------------------------------
+    // Row 1: logo / workbench dropdown / quick search (stretches) /
+    //        palette / spacer / undo / redo / ai badge / user.
+    // ------------------------------------------------------------------
+    row1_ = new QWidget(outer_);
+    row1_->setObjectName(QStringLiteral("topbar-row1"));
+    row1_->setProperty("linuxcadRole", QStringLiteral("topbar-row1"));
+    auto* row1Layout = new QHBoxLayout(row1_);
+    row1Layout->setContentsMargins(0, 0, 0, 0);
+    row1Layout->setSpacing(6);
 
-    workbenchSwitcher_ = new QComboBox(this);
-    workbenchSwitcher_->setMinimumWidth(220);
-    workbenchSwitcher_->setProperty("linuxcadRole", QStringLiteral("topbar-workbench"));
-    addWidget(workbenchSwitcher_);
-    connect(workbenchSwitcher_, qOverload<int>(&QComboBox::currentIndexChanged),
-            this, &TopBar::onWorkbenchSelectionChanged);
+    // --- Logo button ----------------------------------------------------
+    logoButton_ = new QToolButton(row1_);
+    logoButton_->setObjectName(QStringLiteral("topbar-logo"));
+    logoButton_->setProperty("linuxcadRole", QStringLiteral("topbar-logo"));
+    logoButton_->setPopupMode(QToolButton::InstantPopup);
+    logoButton_->setAutoRaise(true);
+    logoButton_->setToolTip(tr("LinuxCAD - project actions"));
+    {
+        const QPixmap wordmark(QStringLiteral(":/linuxcad/branding/wordmark.svg"));
+        if (!wordmark.isNull()) {
+            logoButton_->setIcon(QIcon(wordmark));
+            logoButton_->setIconSize(QSize(120, 28));
+        }
+        else {
+            logoButton_->setText(tr("LinuxCAD"));
+        }
+    }
+    logoButton_->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    buildLogoMenu();
+    row1Layout->addWidget(logoButton_);
 
-    addSeparator();
+    // --- Workbench dropdown ---------------------------------------------
+    workbenchDropdown_ = new WorkbenchDropdownButton(row1_);
+    row1Layout->addWidget(workbenchDropdown_);
 
-    // --- Quick search / command palette ---------------------------------
-    quickSearch_ = new QLineEdit(this);
+    // --- Quick search / command palette --------------------------------
+    quickSearch_ = new QLineEdit(row1_);
+    quickSearch_->setObjectName(QStringLiteral("cmd-search"));
     quickSearch_->setPlaceholderText(tr("Search commands  (Ctrl+K)"));
     quickSearch_->setMinimumWidth(280);
     quickSearch_->setClearButtonEnabled(true);
-    quickSearch_->setProperty("linuxcadRole", QStringLiteral("topbar-search"));
-    addWidget(quickSearch_);
-    connect(quickSearch_, &QLineEdit::textEdited, this, &TopBar::onQuickSearchEdited);
+    quickSearch_->setProperty("linuxcadRole", QStringLiteral("cmd-search"));
+    row1Layout->addWidget(quickSearch_, /*stretch*/ 1);
+    connect(quickSearch_, &QLineEdit::textEdited,    this, &TopBar::onQuickSearchEdited);
     connect(quickSearch_, &QLineEdit::returnPressed, this, &TopBar::onCommandPaletteRequested);
 
+    // --- Palette button -------------------------------------------------
     paletteButton_ = makeIconButton("command", tr("Open command palette (Ctrl+K)"),
                                     SLOT(onCommandPaletteRequested()));
-    addWidget(paletteButton_);
+    row1Layout->addWidget(paletteButton_);
 
-    // Spacer pushes right-side controls to the end.
-    auto* spacer = new QWidget(this);
+    // --- Spacer pushes right-side cluster to the end -------------------
+    auto* spacer = new QWidget(row1_);
+    spacer->setObjectName(QStringLiteral("topbar-spacer"));
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    addWidget(spacer);
+    row1Layout->addWidget(spacer);
 
     // --- Undo / Redo ----------------------------------------------------
     undoButton_ = makeIconButton("edit-undo", tr("Undo (Ctrl+Z)"), SLOT(onUndo()));
     redoButton_ = makeIconButton("edit-redo", tr("Redo (Ctrl+Shift+Z)"), SLOT(onRedo()));
-    addWidget(undoButton_);
-    addWidget(redoButton_);
-
-    addSeparator();
-
-    // --- Save indicator -------------------------------------------------
-    saveIndicator_ = new QLabel(tr("Saved"), this);
-    saveIndicator_->setProperty("linuxcadRole", QStringLiteral("topbar-save"));
-    saveIndicator_->setContentsMargins(8, 0, 8, 0);
-    addWidget(saveIndicator_);
+    row1Layout->addWidget(undoButton_);
+    row1Layout->addWidget(redoButton_);
 
     // --- AI badge -------------------------------------------------------
-    aiBadge_ = new QToolButton(this);
+    aiBadge_ = new QToolButton(row1_);
+    aiBadge_->setObjectName(QStringLiteral("topbar-ai-badge"));
     aiBadge_->setText(tr("AI"));
     aiBadge_->setProperty("linuxcadRole", QStringLiteral("ai-status"));
     aiBadge_->setProperty("state", QStringLiteral("disabled"));
     aiBadge_->setToolTip(tr("AI assistant - click to configure"));
     aiBadge_->setAutoRaise(false);
-    addWidget(aiBadge_);
+    row1Layout->addWidget(aiBadge_);
     connect(aiBadge_, &QToolButton::clicked, this, &TopBar::onAiBadgeClicked);
 
     // --- User area ------------------------------------------------------
     userButton_ = makeIconButton("user", tr("Account / preferences"), nullptr);
+    userButton_->setObjectName(QStringLiteral("topbar-user"));
     userButton_->setPopupMode(QToolButton::InstantPopup);
     auto* userMenu = new QMenu(userButton_);
     userMenu->addAction(tr("Keyboard shortcuts (Ctrl+/)"), [] {
@@ -181,12 +185,31 @@ void TopBar::buildLayout()
         }
     });
     userButton_->setMenu(userMenu);
-    addWidget(userButton_);
+    row1Layout->addWidget(userButton_);
+
+    outerLayout_->addWidget(row1_);
+
+    // ------------------------------------------------------------------
+    // Row 2: ribbon host. The actual Ribbon widget is plugged in later
+    // via setRibbonBody(...) by LinuxCadShell::install.
+    // ------------------------------------------------------------------
+    row2_ = new QWidget(outer_);
+    row2_->setObjectName(QStringLiteral("topbar-row2"));
+    row2_->setProperty("linuxcadRole", QStringLiteral("topbar-row2"));
+    row2_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    row2_->setMinimumHeight(64);
+    auto* row2Layout = new QHBoxLayout(row2_);
+    row2Layout->setContentsMargins(0, 0, 0, 0);
+    row2Layout->setSpacing(0);
+    outerLayout_->addWidget(row2_);
+
+    // --- Toolbar's primary widget: a single addWidget() ---------------
+    addWidget(outer_);
 }
 
-void TopBar::buildProjectMenu()
+void TopBar::buildLogoMenu()
 {
-    auto* menu = new QMenu(projectButton_);
+    auto* menu = new QMenu(logoButton_);
 
     auto runFreeCADCommand = [](const char* name) {
         if (auto* cmd = Gui::Application::Instance->commandManager().getCommandByName(name)) {
@@ -245,12 +268,12 @@ void TopBar::buildProjectMenu()
         }
     });
 
-    projectButton_->setMenu(menu);
+    logoButton_->setMenu(menu);
 }
 
 QToolButton* TopBar::makeIconButton(const char* iconName, const QString& tooltip, const char* slot)
 {
-    auto* btn = new QToolButton(this);
+    auto* btn = new QToolButton(row1_ != nullptr ? row1_ : static_cast<QWidget*>(this));
     btn->setToolTip(tooltip);
     btn->setAutoRaise(true);
     btn->setIcon(BitmapFactory().pixmap(iconName));
@@ -261,87 +284,46 @@ QToolButton* TopBar::makeIconButton(const char* iconName, const QString& tooltip
     return btn;
 }
 
-void TopBar::refreshWorkbenchList()
+void TopBar::setRibbonBody(Ribbon* ribbon)
 {
-    if (!workbenchSwitcher_) {
+    if (row2_ == nullptr) {
+        ribbonHosted_ = ribbon;
         return;
     }
-    auto* app = Gui::Application::Instance;
-    if (!app) {
+    auto* row2Layout = qobject_cast<QHBoxLayout*>(row2_->layout());
+    if (row2Layout == nullptr) {
+        ribbonHosted_ = ribbon;
         return;
     }
 
-    QSignalBlocker block(workbenchSwitcher_);
-    workbenchSwitcher_->clear();
-
-    QStringList wbs = app->workbenches();
-    wbs.sort(Qt::CaseInsensitive);
-    for (const auto& wb : wbs) {
-        const QString display = app->workbenchMenuText(wb);
-        const QPixmap icon = app->workbenchIcon(wb);
-        if (icon.isNull()) {
-            workbenchSwitcher_->addItem(display.isEmpty() ? wb : display, wb);
-        }
-        else {
-            workbenchSwitcher_->addItem(QIcon(icon), display.isEmpty() ? wb : display, wb);
-        }
+    // Detach previously-hosted ribbon, if any.
+    if (ribbonHosted_ != nullptr && ribbonHosted_ != ribbon) {
+        row2Layout->removeWidget(static_cast<QWidget*>(ribbonHosted_));
     }
+
+    ribbonHosted_ = ribbon;
+
+    if (ribbon == nullptr) {
+        row2_->setMinimumHeight(64);
+        return;
+    }
+
+    auto* asWidget = static_cast<QWidget*>(ribbon);
+    asWidget->setParent(row2_);
+    asWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    row2Layout->addWidget(asWidget);
+    asWidget->show();
 }
 
-void TopBar::onWorkbenchActivated(const QString& name)
+Ribbon* TopBar::ribbonBody() const
 {
-    if (!workbenchSwitcher_ || updatingSwitcher_) {
-        return;
-    }
-    QSignalBlocker block(workbenchSwitcher_);
-    for (int i = 0; i < workbenchSwitcher_->count(); ++i) {
-        if (workbenchSwitcher_->itemData(i).toString() == name) {
-            workbenchSwitcher_->setCurrentIndex(i);
-            return;
-        }
-    }
+    return ribbonHosted_;
 }
 
 void TopBar::onActiveDocumentChanged()
 {
-    if (!saveIndicator_) {
-        return;
-    }
-    auto* doc = App::GetApplication().getActiveDocument();
-    if (!doc) {
-        saveIndicator_->setText(tr("No document"));
-        saveIndicator_->setProperty("state", QStringLiteral("none"));
-    }
-    else if (doc->isTouched()) {
-        saveIndicator_->setText(tr("Unsaved changes"));
-        saveIndicator_->setProperty("state", QStringLiteral("dirty"));
-    }
-    else {
-        saveIndicator_->setText(tr("Saved"));
-        saveIndicator_->setProperty("state", QStringLiteral("saved"));
-    }
-    saveIndicator_->style()->unpolish(saveIndicator_);
-    saveIndicator_->style()->polish(saveIndicator_);
-}
-
-void TopBar::onProjectButtonClicked()
-{
-    // Menu is set as InstantPopup; Qt handles the click. No-op slot retained
-    // in case we wire programmatic open later.
-}
-
-void TopBar::onWorkbenchSelectionChanged(int index)
-{
-    if (!workbenchSwitcher_ || index < 0) {
-        return;
-    }
-    const QString wbName = workbenchSwitcher_->itemData(index).toString();
-    if (wbName.isEmpty()) {
-        return;
-    }
-    updatingSwitcher_ = true;
-    Gui::Application::Instance->activateWorkbench(wbName.toUtf8().constData());
-    updatingSwitcher_ = false;
+    // Intentional no-op: kept so existing connections from earlier waves
+    // continue to compile after the save indicator label was removed.
 }
 
 void TopBar::onCommandPaletteRequested()
@@ -391,10 +373,10 @@ void TopBar::onAiStateChanged(int state)
     QString tip      = tr("AI assistant disabled - click to configure");
     switch (state) {
         case 0: stateStr = QStringLiteral("disabled"); label = tr("AI");          tip = tr("AI assistant disabled"); break;
-        case 1: stateStr = QStringLiteral("idle");     label = tr("AI · Ready");  tip = tr("AI assistant idle - changes will trigger suggestions"); break;
-        case 2: stateStr = QStringLiteral("thinking"); label = tr("AI · ...");    tip = tr("AI assistant thinking"); break;
-        case 3: stateStr = QStringLiteral("idle");     label = tr("AI · Ready");  tip = tr("AI cooled off, will resume on next change"); break;
-        case 4: stateStr = QStringLiteral("error");    label = tr("AI · Error");  tip = tr("AI assistant ran into an error - click for details"); break;
+        case 1: stateStr = QStringLiteral("idle");     label = tr("AI \xc2\xb7 Ready");  tip = tr("AI assistant idle - changes will trigger suggestions"); break;
+        case 2: stateStr = QStringLiteral("thinking"); label = tr("AI \xc2\xb7 ...");    tip = tr("AI assistant thinking"); break;
+        case 3: stateStr = QStringLiteral("idle");     label = tr("AI \xc2\xb7 Ready");  tip = tr("AI cooled off, will resume on next change"); break;
+        case 4: stateStr = QStringLiteral("error");    label = tr("AI \xc2\xb7 Error");  tip = tr("AI assistant ran into an error - click for details"); break;
         default: break;
     }
     aiBadge_->setText(label);
@@ -408,65 +390,17 @@ void TopBar::onAiStateChanged(int state)
 
 void TopBar::onAiBadgeClicked()
 {
-    // Open a small inline AI settings dialog. Reuses QSettings-backed values
-    // and persists immediately so the next request picks them up.
-    QDialog dlg(this);
-    dlg.setWindowTitle(tr("AI assistant"));
-    dlg.setModal(true);
-    auto* layout = new QFormLayout(&dlg);
-
-    QSettings s;
-    auto* enabledCb = new QCheckBox(tr("Enable AI suggestions"), &dlg);
-    enabledCb->setChecked(s.value(QStringLiteral("LinuxCAD/AI/Enabled"), false).toBool());
-
-    auto* providerCb = new QComboBox(&dlg);
-    providerCb->addItem(tr("OpenAI / OpenAI-compatible"), QStringLiteral("openai-compatible"));
-    providerCb->addItem(tr("Anthropic Claude"),           QStringLiteral("anthropic"));
-    const QString persistedProvider =
-        s.value(QStringLiteral("LinuxCAD/AI/Provider"), QStringLiteral("openai-compatible")).toString();
-    for (int i = 0; i < providerCb->count(); ++i) {
-        if (providerCb->itemData(i).toString() == persistedProvider) {
-            providerCb->setCurrentIndex(i);
-        }
+    QWidget* anchor = window();
+    if (anchor == nullptr) {
+        anchor = parentWidget();
     }
-
-    auto* endpointEdit = new QLineEdit(
-        s.value(QStringLiteral("LinuxCAD/AI/Endpoint"),
-                QStringLiteral("https://api.openai.com/v1")).toString(),
-        &dlg);
-
-    auto* modelEdit = new QLineEdit(
-        s.value(QStringLiteral("LinuxCAD/AI/Model"), QStringLiteral("gpt-4o-mini")).toString(),
-        &dlg);
-
-    auto* keyEdit = new QLineEdit(s.value(QStringLiteral("LinuxCAD/AI/ApiKey")).toString(), &dlg);
-    keyEdit->setEchoMode(QLineEdit::Password);
-    keyEdit->setPlaceholderText(tr("Bring your own API key"));
-
-    auto* consentCb = new QCheckBox(
-        tr("I understand modeling context will be sent to the chosen provider"),
-        &dlg);
-    consentCb->setChecked(s.value(QStringLiteral("LinuxCAD/AI/ConsentGivenV1"), false).toBool());
-
-    layout->addRow(enabledCb);
-    layout->addRow(tr("Provider:"),  providerCb);
-    layout->addRow(tr("Endpoint:"),  endpointEdit);
-    layout->addRow(tr("Model:"),     modelEdit);
-    layout->addRow(tr("API key:"),   keyEdit);
-    layout->addRow(consentCb);
-
-    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
-    layout->addRow(buttons);
-    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
-
-    if (dlg.exec() == QDialog::Accepted) {
-        s.setValue(QStringLiteral("LinuxCAD/AI/Enabled"),       enabledCb->isChecked());
-        s.setValue(QStringLiteral("LinuxCAD/AI/Provider"),      providerCb->currentData().toString());
-        s.setValue(QStringLiteral("LinuxCAD/AI/Endpoint"),      endpointEdit->text().trimmed());
-        s.setValue(QStringLiteral("LinuxCAD/AI/Model"),         modelEdit->text().trimmed());
-        s.setValue(QStringLiteral("LinuxCAD/AI/ApiKey"),        keyEdit->text());
-        s.setValue(QStringLiteral("LinuxCAD/AI/ConsentGivenV1"),consentCb->isChecked());
+    if (anchor == nullptr) {
+        anchor = Gui::getMainWindow();
+    }
+    if (ConfigureAiDialog::run(anchor) == QDialog::Accepted) {
+        if (auto* sh = Gui::LinuxCAD::Shell::instance()) {
+            sh->reloadAiProvider();
+        }
     }
 }
 

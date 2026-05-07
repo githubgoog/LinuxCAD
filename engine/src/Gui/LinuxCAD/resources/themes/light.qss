@@ -261,3 +261,149 @@ QLabel[linuxcadRole="cheat-sheet-key"] {
 }
 
 QLabel[linuxcadRole="cheat-sheet-name"] { color: #1A1F26; }
+
+/* ====================================================================
+ * Wave 2E - Fusion 2-row TopBar (light surfaces + amber accent)
+ * Inverted siblings of the dark Fusion block. Accent stays #F59E0B so
+ * brand identity is consistent across themes.
+ * ==================================================================== */
+
+QToolBar#LinuxCadTopBar[linuxcadRole="topbar"] {
+    background: #FFFFFF;
+    border: none;
+    border-bottom: 1px solid #DCE0E5;
+    spacing: 0;
+    padding: 0;
+}
+
+QToolBar#LinuxCadTopBar[linuxcadRole="topbar"]::separator {
+    background: transparent;
+    width: 0;
+    margin: 0;
+}
+
+QWidget#topbar-outer[linuxcadRole="topbar-outer"] {
+    background: #FFFFFF;
+}
+
+QWidget#topbar-row1 {
+    background: #FFFFFF;
+    border-bottom: 1px solid #ECEFF3;
+}
+
+QWidget#topbar-row2 {
+    background: #F5F7F9;
+    min-height: 64px;
+}
+
+QToolButton#topbar-logo[linuxcadRole="topbar-logo"] {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+QToolButton#topbar-logo[linuxcadRole="topbar-logo"]:hover {
+    background: #F1F3F5;
+    border-color: #DCE0E5;
+}
+
+QToolButton#topbar-logo[linuxcadRole="topbar-logo"]:pressed {
+    background: #E4E8EE;
+}
+
+QToolButton#topbar-logo[linuxcadRole="topbar-logo"]::menu-indicator {
+    image: none;
+    width: 0;
+    height: 0;
+}
+
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"] {
+    color: #1A1F26;
+    background: #FFFFFF;
+    border: 1px solid #DCE0E5;
+    border-radius: 6px;
+    padding: 0;
+    min-width: 200px;
+    min-height: 28px;
+}
+
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"]:hover {
+    background: #F1F3F5;
+    border-color: #C7CDD6;
+}
+
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"]:pressed {
+    background: #E4E8EE;
+    border-color: #F59E0B;
+}
+
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"]::menu-indicator {
+    image: none;
+    width: 0;
+    height: 0;
+}
+
+QLabel[linuxcadRole="workbench-dropdown-icon"]   { background: transparent; }
+QLabel[linuxcadRole="workbench-dropdown-text"]   { color: #1A1F26; font-weight: 500; background: transparent; }
+QLabel[linuxcadRole="workbench-dropdown-chevron"]{ color: #4B5563; background: transparent; padding-right: 2px; }
+
+QWidget#WorkbenchDropdownButton-popup[linuxcadRole="workbench-dropdown-popup"] {
+    background: #FFFFFF;
+    border: 1px solid #C7CDD6;
+    border-radius: 8px;
+}
+
+QLineEdit#workbench-dropdown-filter {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 6px;
+    padding: 6px 8px;
+    selection-background-color: #F59E0B;
+    selection-color: #14171C;
+}
+
+QLineEdit#workbench-dropdown-filter:focus {
+    border-color: #F59E0B;
+}
+
+QListWidget#workbench-dropdown-list {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 6px;
+    padding: 4px;
+    outline: none;
+}
+
+QListWidget#workbench-dropdown-list::item {
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+QListWidget#workbench-dropdown-list::item:selected {
+    background: #F1F3F5;
+    color: #1A1F26;
+    border-left: 2px solid #F59E0B;
+}
+
+QListWidget#workbench-dropdown-list::item:hover {
+    background: #F8FAFC;
+}
+
+QLineEdit#cmd-search,
+QLineEdit[linuxcadRole="cmd-search"] {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 6px;
+    padding: 4px 10px;
+    selection-background-color: #F59E0B;
+    selection-color: #14171C;
+}
+
+QLineEdit#cmd-search:focus,
+QLineEdit[linuxcadRole="cmd-search"]:focus {
+    border-color: #F59E0B;
+}

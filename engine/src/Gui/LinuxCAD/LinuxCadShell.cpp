@@ -150,8 +150,12 @@ void install(Gui::MainWindow* mw)
     mw->addToolBar(Qt::TopToolBarArea, g_instance->topBar_);
     g_instance->topBar_->setObjectName(QStringLiteral("LinuxCadTopBar"));
 
-    // --- Ribbon (QWidget; Wave 2 TopBar embeds, not a MainWindow QToolBar) ---
-    g_instance->ribbon_ = new Ribbon(g_instance->topBar_);
+    // --- Ribbon (QWidget; Wave 2E TopBar embeds via setRibbonBody) -------
+    // Construct without a parent and let TopBar::setRibbonBody reparent it
+    // onto the row-2 holder. That keeps the ribbon's lifetime owned by the
+    // TopBar and prevents Qt from inserting it as a separate top-level.
+    g_instance->ribbon_ = new Ribbon();
+    g_instance->topBar_->setRibbonBody(g_instance->ribbon_);
 
     // --- Project manager dock (left) ------------------------------------
     g_instance->projectDock_ = new ProjectManagerDock(g_instance->projectManager_, mw);
