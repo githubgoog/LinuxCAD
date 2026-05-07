@@ -8,6 +8,7 @@
 class QHBoxLayout;
 class QScrollArea;
 class QWidget;
+class QToolBar;
 
 namespace Gui {
 namespace LinuxCAD {
