@@ -45,17 +45,32 @@ LinuxCAD/
 ### Linux
 
 ```bash
+# Easiest: run the helper (adjust for your distro):
+#   bash scripts/install-linux-deps.sh
+
 sudo apt install build-essential cmake ninja-build qt6-base-dev qt6-tools-dev \
-                 libcoin-dev libocct-modeling-data-dev libocct-modeling-algorithms-dev \
+                 libcoin-dev \
+                 libocct-foundation-dev \
+                 libocct-data-exchange-dev \
+                 libocct-modeling-data-dev \
+                 libocct-modeling-algorithms-dev \
+                 libocct-ocaf-dev \
+                 libocct-visualization-dev \
                  libxerces-c-dev libboost-all-dev libeigen3-dev libfmt-dev \
-                 libyaml-cpp-dev python3-dev libpyside6-dev libshiboken6-dev \
+                 libyaml-cpp-dev python3-dev python3-pip \
+                 libpyside6-dev libshiboken6-dev pyside6-tools \
                  swig pkg-config
+
+# Prefer the no-space symlink if your folder is named "Linux CAD":
+#   cd ~/Coding/LinuxCAD
 
 ./build/build-linux.sh           # configure + build
 ./build/build-linux.sh --install # plus install to build/_install
 ./packaging/linux/build-deb.sh
 ./packaging/linux/build-appimage.sh
 ```
+
+Launching from the app menu, an AppImage, or a dev build is described in [LAUNCH.md](LAUNCH.md).
 
 ### macOS
 

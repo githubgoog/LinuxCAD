@@ -5,7 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="${LINUXCAD_ROOT:-$SCRIPT_DIR}"
 
 # If invoked from ~/.local/bin (or another copied location), auto-detect the
-# canonical repo path used on this machine.
+# canonical repo path used on this machine. Prefer the no-space symlink when
+# present (CMake / Python tooling breaks on paths with spaces).
 if [ ! -x "$ROOT_DIR/build/build-linux.sh" ] && [ ! -x "$ROOT_DIR/build/build-mac.sh" ]; then
     if [ -x "/home/sabastian/Coding/LinuxCAD/build/build-linux.sh" ] || [ -x "/home/sabastian/Coding/LinuxCAD/build/build-mac.sh" ]; then
         ROOT_DIR="/home/sabastian/Coding/LinuxCAD"
@@ -13,6 +14,42 @@ if [ ! -x "$ROOT_DIR/build/build-linux.sh" ] && [ ! -x "$ROOT_DIR/build/build-ma
         ROOT_DIR="/home/sabastian/Coding/Linux CAD"
     fi
 fi
+
+find_linuxcad_appimage() {
+    # Explicit path always wins (e.g. a known-good release you downloaded).
+    if [ -n "${LINUXCAD_APPIMAGE:-}" ] && [ -f "${LINUXCAD_APPIMAGE}" ]; then
+        printf "%s\n" "${LINUXCAD_APPIMAGE}"
+        return 0
+    fi
+
+    local newest=""
+    local f
+    shopt -s nullglob
+    # Prefer AppImages produced by *this* repo's packaging (not a random file
+    # in ~/.local/bin — that name was used by the old Electron prototype).
+    for f in "$ROOT_DIR/build/_packages"/LinuxCAD-*.AppImage; do
+        [ -f "$f" ] || continue
+        if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then
+            newest="$f"
+        fi
+    done
+
+    if [ "${LINUXCAD_USE_SYSTEM_APPIMAGE:-0}" = "1" ]; then
+        for f in "$HOME/.local/bin"/LinuxCAD*.AppImage "$HOME"/LinuxCAD*.AppImage; do
+            [ -f "$f" ] || continue
+            if [ -z "$newest" ] || [ "$f" -nt "$newest" ]; then
+                newest="$f"
+            fi
+        done
+    fi
+    shopt -u nullglob
+
+    if [ -n "$newest" ]; then
+        printf "%s\n" "$newest"
+        return 0
+    fi
+    return 1
+}
 
 find_linuxcad_bin() {
     local candidates=(
@@ -42,6 +79,7 @@ build_if_needed() {
     case "$os" in
         Linux)
             echo "LinuxCAD binary not found. Building for Linux..."
+            echo "Tip: use repo path without a space, e.g. cd ~/Coding/LinuxCAD"
             "$ROOT_DIR/build/build-linux.sh"
             ;;
         Darwin)
@@ -60,41 +98,65 @@ build_if_needed() {
     esac
 }
 
+print_build_help() {
+    cat >&2 <<EOF
+
+Could not run LinuxCAD. Fix one of the following:
+
+  1) Install a release AppImage and optionally set:
+       export LINUXCAD_APPIMAGE="\$HOME/.local/bin/LinuxCAD.AppImage"
+
+  2) Install missing build libraries (common: Open CASCADE exchange), then rebuild:
+       sudo apt install libocct-data-exchange-dev
+       cd ~/Coding/LinuxCAD && ./build/build-linux.sh --install
+
+  3) Full dependency list: see LAUNCH.md and scripts/install-linux-deps.sh
+
+Repository root detected as: $ROOT_DIR
+EOF
+}
+
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
     cat <<'EOF'
 LinuxCAD launcher
 
 Usage:
-  ./linuxcad [args passed to the app]
+  linuxcad [arguments passed to the app]
 
-Behavior:
-  - Finds an existing LinuxCAD/FreeCAD binary in build output dirs.
-  - If missing, auto-runs the platform build script.
+Search order:
+  1) Built binary under build/_out or build/_install (FreeCAD or LinuxCAD name)
+  2) LINUXCAD_APPIMAGE, then newest LinuxCAD*.AppImage under this repo's build/_packages/
+  3) Only if LINUXCAD_USE_SYSTEM_APPIMAGE=1: ~/.local/bin or $HOME LinuxCAD*.AppImage
+  4) On Linux/macOS, runs build/build-*.sh if still nothing is found
+
+See LAUNCH.md for paths with spaces vs the LinuxCAD symlink.
 EOF
     exit 0
 fi
 
 if [ ! -x "$ROOT_DIR/build/build-linux.sh" ] && [ ! -x "$ROOT_DIR/build/build-mac.sh" ]; then
-    echo "Build scripts not found. Are you in the LinuxCAD repo root?"
+    echo "Build scripts not found under: $ROOT_DIR"
+    echo "Set LINUXCAD_ROOT to your LinuxCAD checkout (use ~/Coding/LinuxCAD if you use the symlink)."
     exit 1
 fi
 
 BIN_PATH="$(find_linuxcad_bin || true)"
+
 if [ -z "$BIN_PATH" ]; then
-    build_if_needed
+    build_if_needed || true
     BIN_PATH="$(find_linuxcad_bin || true)"
 fi
 
-if [ -z "$BIN_PATH" ]; then
-    echo "Build finished but no runnable LinuxCAD binary was found."
-    echo "Expected one of:"
-    echo "  build/_out/bin/FreeCAD"
-    echo "  build/_out/bin/LinuxCAD"
-    echo "  build/_install/bin/FreeCAD"
-    echo "  build/_install/bin/LinuxCAD"
-    exit 1
+if [ -n "$BIN_PATH" ]; then
+    echo "Launching: $BIN_PATH"
+    exec "$BIN_PATH" "$@"
 fi
 
-echo "Launching: $BIN_PATH"
-exec "$BIN_PATH" "$@"
+APPIMG="$(find_linuxcad_appimage || true)"
+if [ -n "$APPIMG" ]; then
+    echo "Launching AppImage: $APPIMG"
+    exec "$APPIMG" "$@"
+fi
 
+print_build_help
+exit 1

@@ -79,3 +79,8 @@ node_modules/
 *.log
 debug/
 .debug
+
+# Local CMake / install trees (do not commit)
+build/_out/
+build/_install/
+build/_packages/

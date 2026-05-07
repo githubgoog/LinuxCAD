@@ -1,0 +1,127 @@
+/* LinuxCAD - light theme. Mirrors dark.qss with inverted color tokens. */
+
+QToolBar[linuxcadRole="topbar"] {
+    background: #FFFFFF;
+    border: none;
+    border-bottom: 1px solid #DCE0E5;
+    spacing: 4px;
+    padding: 4px 8px;
+}
+
+QToolBar[linuxcadRole="topbar"]::separator {
+    background: #DCE0E5;
+    width: 1px;
+    margin: 6px 6px;
+}
+
+QToolButton[linuxcadRole="topbar-iconbtn"],
+QToolButton[linuxcadRole="topbar-project"] {
+    color: #1A1F26;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px 10px;
+}
+
+QToolButton[linuxcadRole="topbar-iconbtn"]:hover,
+QToolButton[linuxcadRole="topbar-project"]:hover {
+    background: #F1F3F5;
+    border-color: #DCE0E5;
+}
+
+QLabel[linuxcadRole="topbar-label"] { color: #4B5563; }
+
+QComboBox[linuxcadRole="topbar-workbench"] {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+QLineEdit[linuxcadRole="topbar-search"] {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 4px;
+    padding: 4px 8px;
+    selection-background-color: #2F7BD0;
+}
+
+QLineEdit[linuxcadRole="topbar-search"]:focus {
+    border-color: #2F7BD0;
+}
+
+QLabel[linuxcadRole="topbar-save"][state="saved"]  { color: #2D8A47; }
+QLabel[linuxcadRole="topbar-save"][state="dirty"]  { color: #B07700; }
+QLabel[linuxcadRole="topbar-save"][state="none"]   { color: #8A93A1; }
+
+QDockWidget[linuxcadRole="project-dock"]::title {
+    background: #FFFFFF;
+    color: #1A1F26;
+    padding: 6px 10px;
+    border-bottom: 1px solid #DCE0E5;
+}
+
+QWidget[linuxcadRole="project-dock-body"] {
+    background: #FAFBFC;
+}
+
+QPushButton {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 4px;
+    padding: 6px 12px;
+}
+
+QPushButton:hover  { background: #F1F3F5; }
+QPushButton:pressed { background: #E4E8EE; }
+
+QWidget[linuxcadRole="welcome"] {
+    background: #FAFBFC;
+    color: #1A1F26;
+}
+
+QWidget[linuxcadRole="welcome-left"] {
+    background: #FFFFFF;
+    border-right: 1px solid #DCE0E5;
+}
+
+QPushButton[linuxcadRole="welcome-cta-primary"] {
+    background: #2F7BD0;
+    color: #FFFFFF;
+    border-color: #1D5FAA;
+    padding: 10px 14px;
+    font-weight: 600;
+}
+
+QPushButton[linuxcadRole="welcome-cta-primary"]:hover  { background: #1D5FAA; }
+
+QDialog[linuxcadRole="command-palette"] {
+    background: #FFFFFF;
+    border: 1px solid #DCE0E5;
+    border-radius: 8px;
+}
+
+QLineEdit[linuxcadRole="command-palette-input"] {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+}
+
+QListWidget[linuxcadRole="command-palette-list"] {
+    background: #FFFFFF;
+    color: #1A1F26;
+    border: 1px solid #DCE0E5;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+QListWidget[linuxcadRole="command-palette-list"]::item:selected {
+    background: #E4E8EE;
+    color: #1A1F26;
+}
