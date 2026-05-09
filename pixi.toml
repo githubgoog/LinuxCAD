@@ -234,6 +234,10 @@ package-os = { cmd = ["bash", "packaging/macos/build-dmg.sh"], depends-on = ["in
 launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
 
 [target.win-64.tasks]
+# Windows runners have Git for Windows installed at C:\Program Files\Git\;
+# `git.exe` is on PATH and supports submodules, unlike conda-forge minimal-git.
+# Override the Linux-style /usr/bin/git path used in the top-level [tasks].
+initialize = { cmd = ["git.exe", "submodule", "update", "--init", "--recursive"], cwd = "engine" }
 configure-release = { cmd = [
     "cmake", "--preset", "conda-windows-release",
     "-DCMAKE_GENERATOR_PLATFORM=", "-DCMAKE_GENERATOR_TOOLSET=",
