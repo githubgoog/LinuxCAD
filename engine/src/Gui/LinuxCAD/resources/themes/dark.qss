@@ -61,36 +61,17 @@ QLineEdit[linuxcadRole="topbar-search"] {
     border: 1px solid #2C333D;
     border-radius: 4px;
     padding: 4px 8px;
-    selection-background-color: #418FDE;
+    selection-background-color: #F59E0B;
+    selection-color: #14171C;
 }
 
 QLineEdit[linuxcadRole="topbar-search"]:focus {
-    border-color: #418FDE;
+    border-color: #F59E0B;
 }
 
 QLabel[linuxcadRole="topbar-save"][state="saved"]  { color: #4CAF50; }
 QLabel[linuxcadRole="topbar-save"][state="dirty"]  { color: #E5B43A; }
 QLabel[linuxcadRole="topbar-save"][state="none"]   { color: #6B7280; }
-
-/* ---------- Project dock --------------------------------------------- */
-QDockWidget[linuxcadRole="project-dock"]::title {
-    background: #161A20;
-    color: #E6EAF0;
-    padding: 6px 10px;
-    border-bottom: 1px solid #2C333D;
-}
-
-QWidget[linuxcadRole="project-dock-body"] {
-    background: #0F1216;
-}
-
-QLabel[linuxcadRole="project-header"] {
-    color: #E6EAF0;
-}
-
-QLabel[linuxcadRole="project-sub-header"] {
-    color: #9AA3AF;
-}
 
 QTreeWidget {
     background: #0F1216;
@@ -112,69 +93,6 @@ QPushButton {
 
 QPushButton:hover  { background: #2A313B; }
 QPushButton:pressed { background: #1E232B; }
-
-/* ---------- Welcome screen ------------------------------------------- */
-QWidget[linuxcadRole="welcome"] {
-    background: #0F1216;
-    color: #E6EAF0;
-}
-
-QWidget[linuxcadRole="welcome-left"] {
-    background: #161A20;
-    border-right: 1px solid #2C333D;
-}
-
-QWidget[linuxcadRole="welcome-right"] {
-    background: #0F1216;
-}
-
-QLabel[linuxcadRole="welcome-hero"] {
-    color: #FFFFFF;
-}
-
-QLabel[linuxcadRole="welcome-tagline"],
-QLabel[linuxcadRole="welcome-section-title"] {
-    color: #9AA3AF;
-}
-
-QLabel[linuxcadRole="welcome-footer"] {
-    color: #6B7280;
-}
-
-QPushButton[linuxcadRole="welcome-cta-primary"] {
-    background: #418FDE;
-    color: #FFFFFF;
-    border: 1px solid #5BA8F2;
-    padding: 10px 14px;
-    font-weight: 600;
-}
-
-QPushButton[linuxcadRole="welcome-cta-primary"]:hover  { background: #5BA8F2; }
-
-QPushButton[linuxcadRole="welcome-cta"] {
-    padding: 10px 14px;
-}
-
-QPushButton[linuxcadRole="welcome-cta-quiet"] {
-    background: transparent;
-    border-color: transparent;
-    color: #9AA3AF;
-    padding: 8px 14px;
-    text-align: left;
-}
-
-QPushButton[linuxcadRole="welcome-cta-quiet"]:hover {
-    color: #E6EAF0;
-}
-
-QListWidget[linuxcadRole="welcome-recent"] {
-    background: #0F1216;
-    color: #E6EAF0;
-    border: 1px solid #2C333D;
-    border-radius: 4px;
-    alternate-background-color: #131820;
-    padding: 4px;
-}
 
 /* ---------- Command palette ------------------------------------------ */
 QDialog[linuxcadRole="command-palette"] {
@@ -223,11 +141,6 @@ QToolBar[linuxcadRole="ribbon"] {
     spacing: 0;
 }
 
-QScrollArea#LinuxCadRibbonScroll {
-    background: transparent;
-    border: none;
-}
-
 QWidget[linuxcadRole="ribbon-content"] {
     background: transparent;
 }
@@ -253,7 +166,7 @@ QToolButton[linuxcadRole="ribbon-button"]:hover {
 QToolButton[linuxcadRole="ribbon-button"]:pressed,
 QToolButton[linuxcadRole="ribbon-button"]:checked {
     background: #2A313B;
-    border-color: #418FDE;
+    border-color: #F59E0B;
 }
 
 QFrame[linuxcadRole="ribbon-divider"] {
@@ -292,6 +205,54 @@ QDockWidget[linuxcadRole="props-dock"]::title {
     font-weight: 600;
 }
 
+QDockWidget[linuxcadRole="tree-dock"],
+QDockWidget[linuxcadRole="props-dock"],
+QDockWidget[linuxcadRole="report-dock"] {
+    background-color: #14171C;
+    color: #ECEEF1;
+}
+
+QDockWidget[linuxcadRole="tree-dock"] QTreeView,
+QDockWidget[linuxcadRole="tree-dock"] QTreeWidget,
+QDockWidget[linuxcadRole="props-dock"] QTreeView,
+QDockWidget[linuxcadRole="props-dock"] QTreeWidget {
+    background-color: #14171C;
+    color: #ECEEF1;
+    alternate-background-color: #1B1F25;
+    border: 1px solid #2C323B;
+    outline: none;
+    selection-background-color: #2C323B;
+    selection-color: #ECEEF1;
+}
+
+QDockWidget[linuxcadRole="report-dock"] QPlainTextEdit,
+QDockWidget[linuxcadRole="report-dock"] QTextEdit,
+QDockWidget[linuxcadRole="report-dock"] QTextBrowser {
+    background-color: #14171C;
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+}
+
+QDockWidget[linuxcadRole="tree-dock"] QTabWidget::pane,
+QDockWidget[linuxcadRole="props-dock"] QTabWidget::pane {
+    background: #14171C;
+    border: 1px solid #2C323B;
+}
+
+QDockWidget[linuxcadRole="tree-dock"] QTabBar::tab,
+QDockWidget[linuxcadRole="props-dock"] QTabBar::tab {
+    background: #1B1F25;
+    color: #A8AEB8;
+    border: 1px solid #2C323B;
+    padding: 4px 12px;
+}
+
+QDockWidget[linuxcadRole="tree-dock"] QTabBar::tab:selected,
+QDockWidget[linuxcadRole="props-dock"] QTabBar::tab:selected {
+    background: #232830;
+    color: #ECEEF1;
+}
+
 /* ---------- View widgets overlay (top-right above NaviCube) --------- */
 QWidget[linuxcadRole="view-widgets"] {
     background: rgba(22, 26, 32, 220);
@@ -318,34 +279,34 @@ QToolButton[linuxcadRole="view-widget-btn"]:hover {
 QToolButton[linuxcadRole="view-widget-btn"]:pressed,
 QToolButton[linuxcadRole="view-widget-btn"]:checked {
     background: #2A313B;
-    border-color: #418FDE;
+    border-color: #F59E0B;
 }
 
 /* ---------- AI status badge in TopBar ------------------------------- */
 QToolButton[linuxcadRole="ai-status"] {
-    color: #E6EAF0;
-    background: #1B2434;
-    border: 1px solid #2C4061;
+    color: #ECEEF1;
+    background: #1B1F25;
+    border: 1px solid #3A4150;
     border-radius: 10px;
     padding: 2px 10px;
     font-weight: 600;
 }
 
-QToolButton[linuxcadRole="ai-status"][state="idle"]     { color: #5BA8F2; border-color: #2C4061; }
-QToolButton[linuxcadRole="ai-status"][state="thinking"] { color: #9BC6F0; border-color: #418FDE; }
+QToolButton[linuxcadRole="ai-status"][state="idle"]     { color: #F59E0B; border-color: #3A4150; }
+QToolButton[linuxcadRole="ai-status"][state="thinking"] { color: #FFB933; border-color: #F59E0B; }
 QToolButton[linuxcadRole="ai-status"][state="error"]    { color: #F08080; border-color: #663030; }
-QToolButton[linuxcadRole="ai-status"][state="disabled"] { color: #6B7280; border-color: #2C333D; background: #1B2027; }
+QToolButton[linuxcadRole="ai-status"][state="disabled"] { color: #6B7280; border-color: #2C323B; background: #14171C; }
 
 QToolButton[linuxcadRole="ai-status"][linuxcadAiMock="true"] {
-    border: 1px dashed #F59E0B;
+    border: 1px dashed #FFB933;
 }
 
-QToolButton[linuxcadRole="ai-status"]:hover { background: #232C42; }
+QToolButton[linuxcadRole="ai-status"]:hover { background: #232830; }
 
 /* ---------- Ghost-toast AI suggestion ------------------------------- */
 QFrame[linuxcadRole="ai-toast"] {
     background: rgba(22, 26, 32, 235);
-    border: 1px solid #2C4061;
+    border: 1px solid #3A4150;
     border-radius: 12px;
 }
 
@@ -369,16 +330,16 @@ QToolButton[linuxcadRole="ai-toast-button"] {
 }
 
 QToolButton[linuxcadRole="ai-toast-button"][primary="true"] {
-    background: #418FDE;
-    color: #FFFFFF;
-    border-color: #5BA8F2;
+    background: #F59E0B;
+    color: #14171C;
+    border-color: #FFB933;
 }
 
 QToolButton[linuxcadRole="ai-toast-button"]:hover { background: #232932; }
-QToolButton[linuxcadRole="ai-toast-button"][primary="true"]:hover { background: #5BA8F2; }
+QToolButton[linuxcadRole="ai-toast-button"][primary="true"]:hover { background: #FFB933; }
 
 QLabel[linuxcadRole="ai-toast-why"] {
-    color: #5BA8F2;
+    color: #FFB933;
 }
 
 /* ---------- Cheat sheet --------------------------------------------- */
@@ -398,7 +359,7 @@ QLineEdit[linuxcadRole="cheat-sheet-input"] {
 }
 
 QLabel[linuxcadRole="cheat-sheet-section"] {
-    color: #5BA8F2;
+    color: #F59E0B;
     font-weight: 700;
     padding: 8px 4px 4px 4px;
     text-transform: uppercase;
@@ -582,3 +543,698 @@ QLineEdit#cmd-search:focus,
 QLineEdit[linuxcadRole="cmd-search"]:focus {
     border-color: #F59E0B;
 }
+
+/* ====================================================================
+ * Wave V2 - Typography
+ * --------------------------------------------------------------------
+ * Force every native Qt widget to render in our sans-serif stack so
+ * QMenuBar / QMenu / QDockWidget::title / QStatusBar etc. stop falling
+ * back to the platform serif on Linux.
+ * Type scale: 11 / 12 / 13 / 14 / 16 / 20 px. Weights: 400 / 500 / 600.
+ * ==================================================================== */
+
+QMainWindow,
+QMenuBar,
+QMenu,
+QDockWidget,
+QToolBar,
+QStatusBar,
+QToolTip,
+QDialog,
+QMdiSubWindow,
+QHeaderView,
+QHeaderView::section,
+QTreeView,
+QTreeWidget,
+QListView,
+QListWidget,
+QTableView,
+QTableWidget,
+QTabBar,
+QTabBar::tab,
+QGroupBox,
+QGroupBox::title,
+QPushButton,
+QToolButton,
+QComboBox,
+QLineEdit,
+QPlainTextEdit,
+QTextEdit,
+QTextBrowser,
+QSpinBox,
+QDoubleSpinBox,
+QCheckBox,
+QRadioButton,
+QLabel {
+    font-family: "Inter", "Segoe UI", Roboto, Cantarell, "Noto Sans", system-ui, sans-serif;
+}
+
+/* ====================================================================
+ * Global dark foundation
+ * --------------------------------------------------------------------
+ * Some native FreeCAD/Qt hosts do not carry linuxcadRole and were falling
+ * back to light/system palette. Force a consistent dark baseline first,
+ * then keep component-specific overrides below.
+ * ==================================================================== */
+QWidget {
+    background: #14171C;
+    color: #ECEEF1;
+}
+QFrame,
+QAbstractScrollArea,
+QScrollArea,
+QTreeView,
+QTreeWidget,
+QListView,
+QListWidget,
+QTableView,
+QTableWidget,
+QPlainTextEdit,
+QTextEdit,
+QTextBrowser,
+QGraphicsView,
+QMdiArea,
+QMdiSubWindow {
+    background: #14171C;
+    color: #ECEEF1;
+    border-color: #2C323B;
+}
+QAbstractItemView {
+    alternate-background-color: #1B1F25;
+    selection-background-color: #232830;
+    selection-color: #ECEEF1;
+}
+
+/* Global toolbar icon readability (native + LinuxCAD toolbars). */
+QToolBar QToolButton {
+    color: #DDE3EC;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 3px 6px;
+}
+QToolBar QToolButton:hover {
+    background: #232A33;
+    border-color: #354052;
+}
+QToolBar QToolButton:pressed,
+QToolBar QToolButton:checked {
+    background: #2A3340;
+    border-color: #F59E0B;
+    color: #FFFFFF;
+}
+QToolBar QToolButton:disabled {
+    color: #6F7886;
+}
+
+QMainWindow,
+QMenuBar,
+QMenu,
+QDockWidget,
+QToolBar,
+QStatusBar,
+QDialog {
+    font-size: 13px;
+    font-weight: 400;
+}
+
+/* Menus / menu bar -------------------------------------------------- */
+QMenuBar {
+    background: #14171C;
+    color: #ECEEF1;
+    border: none;
+    border-bottom: 1px solid #2C323B;
+    padding: 2px 6px;
+    spacing: 4px;
+}
+QMenuBar::item {
+    background: transparent;
+    color: #ECEEF1;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+QMenuBar::item:selected,
+QMenuBar::item:pressed {
+    background: #232830;
+    color: #ECEEF1;
+}
+
+QMenu {
+    background: #1B1F25;
+    color: #ECEEF1;
+    border: 1px solid #3A4150;
+    padding: 4px;
+}
+QMenu::item {
+    background: transparent;
+    color: #ECEEF1;
+    padding: 5px 18px 5px 24px;
+    border-radius: 4px;
+}
+QMenu::item:selected {
+    background: #232830;
+    color: #ECEEF1;
+    border-left: 2px solid #F59E0B;
+}
+QMenu::item:disabled {
+    color: #6B7280;
+}
+QMenu::separator {
+    height: 1px;
+    background: #2C323B;
+    margin: 4px 8px;
+}
+QMenu::indicator {
+    width: 14px;
+    height: 14px;
+    margin-left: 4px;
+}
+QMenu::indicator:checked {
+    /* No image asset yet — rely on Qt default but theme the surrounding bg */
+}
+
+/* Dock title, status bar, group box title --------------------------- */
+QDockWidget::title {
+    background: #14171C;
+    color: #ECEEF1;
+    padding: 6px 10px;
+    border-bottom: 1px solid #2C323B;
+    font-weight: 600;
+    font-size: 12px;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Dock title-bar controls (close / float) — must stay visible on dark chrome */
+QDockWidget::close-button,
+QDockWidget::float-button {
+    subcontrol-origin: padding;
+    subcontrol-position: right;
+    background: #2E3642;
+    border: 1px solid #5C6575;
+    border-radius: 3px;
+    padding: 3px;
+    width: 18px;
+    height: 18px;
+}
+QDockWidget::close-button:hover,
+QDockWidget::float-button:hover {
+    background: #2C323B;
+    border-color: #F59E0B;
+}
+QDockWidget::close-button:pressed,
+QDockWidget::float-button:pressed {
+    background: #F59E0B;
+    border-color: #B36F00;
+}
+
+QStatusBar {
+    background: #14171C;
+    color: #A8AEB8;
+    border-top: 1px solid #2C323B;
+    font-size: 12px;
+}
+QStatusBar QLabel {
+    color: #A8AEB8;
+}
+
+QGroupBox {
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+    border-radius: 4px;
+    margin-top: 12px;
+    font-size: 13px;
+}
+QGroupBox::title {
+    color: #A8AEB8;
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6px;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+QHeaderView::section {
+    background: #1B1F25;
+    color: #A8AEB8;
+    border: none;
+    border-right: 1px solid #2C323B;
+    border-bottom: 1px solid #2C323B;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+QToolTip {
+    background: #232830;
+    color: #ECEEF1;
+    border: 1px solid #3A4150;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* ====================================================================
+ * Wave V4 - Global scrollbars + Fusion ribbon tabs
+ * ==================================================================== */
+
+/* Vertical scrollbar */
+QScrollBar:vertical {
+    background: #14171C;
+    width: 12px;
+    margin: 0;
+    border: none;
+}
+QScrollBar::handle:vertical {
+    background: #3A4150;
+    min-height: 32px;
+    border-radius: 4px;
+    margin: 2px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #F59E0B;
+}
+QScrollBar::handle:vertical:pressed {
+    background: #B36F00;
+}
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+    background: transparent;
+    border: none;
+}
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: transparent;
+}
+
+/* Horizontal scrollbar */
+QScrollBar:horizontal {
+    background: #14171C;
+    height: 12px;
+    margin: 0;
+    border: none;
+}
+QScrollBar::handle:horizontal {
+    background: #3A4150;
+    min-width: 32px;
+    border-radius: 4px;
+    margin: 2px;
+}
+QScrollBar::handle:horizontal:hover {
+    background: #F59E0B;
+}
+QScrollBar::handle:horizontal:pressed {
+    background: #B36F00;
+}
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+    background: transparent;
+    border: none;
+}
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: transparent;
+}
+
+/* Ribbon tab bar */
+QTabBar#LinuxCadRibbonTabs {
+    background: #1B1F25;
+    border: none;
+    qproperty-drawBase: 0;
+}
+QTabBar#LinuxCadRibbonTabs::tab {
+    background: transparent;
+    color: #A8AEB8;
+    padding: 6px 16px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-right: 0;
+    min-width: 80px;
+    min-height: 28px;
+    max-height: 28px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+QTabBar#LinuxCadRibbonTabs::tab:hover {
+    color: #ECEEF1;
+    background: #232830;
+}
+QTabBar#LinuxCadRibbonTabs::tab:selected {
+    color: #ECEEF1;
+    background: #14171C;
+    border-bottom: 2px solid #F59E0B;
+    font-weight: 600;
+}
+QTabBar#LinuxCadRibbonTabs::tab:focus {
+    outline: none;
+}
+QTabBar#LinuxCadRibbonTabs QToolButton {
+    background: #1B1F25;
+    color: #A8AEB8;
+    border: 1px solid #2C323B;
+    border-radius: 0;
+}
+QTabBar#LinuxCadRibbonTabs QToolButton:hover {
+    color: #ECEEF1;
+    background: #232830;
+}
+
+QFrame#LinuxCadRibbonDivider {
+    background: #2C323B;
+    max-height: 1px;
+    min-height: 1px;
+    border: none;
+}
+
+QStackedWidget#LinuxCadRibbonStack {
+    background: #14171C;
+    border: none;
+}
+
+QWidget[linuxcadRole="ribbon-page"] {
+    background: #14171C;
+}
+
+QLabel[linuxcadRole="ribbon-empty"] {
+    color: #6B7280;
+    font-style: italic;
+    padding: 12px;
+    background: #14171C;
+}
+
+/* ====================================================================
+ * Wave V6 - Polish: focus rings, form widgets, theme picker
+ * --------------------------------------------------------------------
+ * Every interactive widget gets a default / hover / pressed / focused
+ * state. Focus = 1px amber border (no layout shift).
+ * ==================================================================== */
+
+/* Focus rings (border swap, no layout shift) ------------------------ */
+QLineEdit:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus,
+QComboBox:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border-color: #F59E0B;
+}
+
+/* Generic form bases (only the widgets V1 didn't already touch) ----- */
+QLineEdit,
+QTextEdit,
+QPlainTextEdit {
+    background: #1B1F25;
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+    border-radius: 4px;
+    padding: 4px 8px;
+    selection-background-color: #F59E0B;
+    selection-color: #14171C;
+}
+QLineEdit:disabled,
+QTextEdit:disabled,
+QPlainTextEdit:disabled {
+    background: #14171C;
+    color: #6B7280;
+    border-color: #2C323B;
+}
+QLineEdit:hover:!focus,
+QComboBox:hover:!focus,
+QSpinBox:hover:!focus,
+QDoubleSpinBox:hover:!focus {
+    border-color: #3A4150;
+}
+
+/* Push / tool buttons (defensive defaults; role-specific rules win) */
+QPushButton {
+    background: #1B1F25;
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-weight: 500;
+}
+QPushButton:hover { background: #232830; border-color: #3A4150; }
+QPushButton:pressed { background: #2C323B; }
+QPushButton:focus { border-color: #F59E0B; }
+QPushButton:disabled { color: #6B7280; background: #14171C; border-color: #2C323B; }
+QPushButton:default {
+    background: #F59E0B;
+    color: #14171C;
+    border-color: #B36F00;
+    font-weight: 600;
+}
+QPushButton:default:hover { background: #FFB933; }
+
+/* QCheckBox + QRadioButton -------------------------------------------- */
+QCheckBox,
+QRadioButton {
+    color: #ECEEF1;
+    spacing: 6px;
+}
+QCheckBox:disabled,
+QRadioButton:disabled { color: #6B7280; }
+
+QCheckBox::indicator,
+QRadioButton::indicator {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #3A4150;
+    background: #14171C;
+}
+QCheckBox::indicator { border-radius: 3px; }
+QRadioButton::indicator { border-radius: 7px; }
+
+QCheckBox::indicator:hover,
+QRadioButton::indicator:hover {
+    border-color: #F59E0B;
+}
+QCheckBox::indicator:checked,
+QRadioButton::indicator:checked {
+    background: #F59E0B;
+    border-color: #B36F00;
+}
+QCheckBox::indicator:checked:hover,
+QRadioButton::indicator:checked:hover {
+    background: #FFB933;
+}
+QCheckBox::indicator:disabled,
+QRadioButton::indicator:disabled {
+    background: #14171C;
+    border-color: #2C323B;
+}
+
+/* QComboBox + dropdown view ------------------------------------------ */
+QComboBox {
+    background: #1B1F25;
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+    border-radius: 4px;
+    padding: 4px 8px;
+    min-height: 24px;
+}
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+}
+QComboBox::down-arrow {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #A8AEB8;
+    margin-right: 6px;
+}
+QComboBox::down-arrow:on { border-top-color: #F59E0B; }
+QComboBox QAbstractItemView {
+    background: #1B1F25;
+    color: #ECEEF1;
+    border: 1px solid #3A4150;
+    selection-background-color: #232830;
+    selection-color: #ECEEF1;
+    padding: 4px;
+    outline: none;
+}
+QComboBox QAbstractItemView::item {
+    padding: 4px 8px;
+    border-radius: 3px;
+}
+QComboBox QAbstractItemView::item:selected {
+    background: #232830;
+    border-left: 2px solid #F59E0B;
+}
+
+/* QSpinBox + QDoubleSpinBox ------------------------------------------ */
+QSpinBox,
+QDoubleSpinBox {
+    background: #1B1F25;
+    color: #ECEEF1;
+    border: 1px solid #2C323B;
+    border-radius: 4px;
+    padding: 4px 8px;
+    selection-background-color: #F59E0B;
+    selection-color: #14171C;
+}
+QSpinBox::up-button,
+QDoubleSpinBox::up-button,
+QSpinBox::down-button,
+QDoubleSpinBox::down-button {
+    background: #232830;
+    border: 1px solid #2C323B;
+    width: 16px;
+}
+QSpinBox::up-button { subcontrol-position: top right; }
+QSpinBox::down-button,
+QDoubleSpinBox::down-button { subcontrol-position: bottom right; }
+QSpinBox::up-button:hover,
+QSpinBox::down-button:hover,
+QDoubleSpinBox::up-button:hover,
+QDoubleSpinBox::down-button:hover {
+    background: #2C323B;
+    border-color: #F59E0B;
+}
+QSpinBox::up-arrow,
+QDoubleSpinBox::up-arrow {
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 5px solid #A8AEB8;
+}
+QSpinBox::down-arrow,
+QDoubleSpinBox::down-arrow {
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #A8AEB8;
+}
+
+/* QSlider ------------------------------------------------------------- */
+QSlider::groove:horizontal {
+    background: #2C323B;
+    height: 4px;
+    border-radius: 2px;
+}
+QSlider::sub-page:horizontal {
+    background: #F59E0B;
+    height: 4px;
+    border-radius: 2px;
+}
+QSlider::handle:horizontal {
+    background: #F59E0B;
+    border: 1px solid #B36F00;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    margin: -5px 0;
+}
+QSlider::handle:horizontal:hover {
+    background: #FFB933;
+    border-color: #F59E0B;
+}
+QSlider::groove:vertical {
+    background: #2C323B;
+    width: 4px;
+    border-radius: 2px;
+}
+QSlider::handle:vertical {
+    background: #F59E0B;
+    border: 1px solid #B36F00;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    margin: 0 -5px;
+}
+
+/* QProgressBar -------------------------------------------------------- */
+QProgressBar {
+    background: #14171C;
+    border: 1px solid #2C323B;
+    border-radius: 4px;
+    color: #ECEEF1;
+    text-align: center;
+    height: 10px;
+}
+QProgressBar::chunk {
+    background: #F59E0B;
+    border-radius: 3px;
+}
+
+/* QTabWidget (generic, not the ribbon) -------------------------------- */
+QTabWidget::pane {
+    background: #14171C;
+    border: 1px solid #2C323B;
+    border-radius: 4px;
+}
+QTabBar::tab {
+    background: #1B1F25;
+    color: #A8AEB8;
+    border: 1px solid #2C323B;
+    border-bottom: 1px solid transparent;
+    padding: 6px 14px;
+    margin-right: 1px;
+}
+QTabBar::tab:selected {
+    background: #14171C;
+    color: #ECEEF1;
+    border-color: #3A4150;
+}
+QTabBar::tab:hover { color: #ECEEF1; }
+
+/* Theme picker dialog (Phase 1 stub renders these properties) -------- */
+QDialog[linuxcadRole="theme-picker"] {
+    background: #14171C;
+    color: #ECEEF1;
+}
+QListWidget[linuxcadRole="theme-picker-list"] {
+    background: #1B1F25;
+    border: 1px solid #2C323B;
+    border-radius: 6px;
+    color: #ECEEF1;
+    padding: 4px;
+    outline: none;
+}
+QListWidget[linuxcadRole="theme-picker-list"]::item {
+    border-radius: 4px;
+    padding: 6px;
+    margin: 2px 0;
+}
+QListWidget[linuxcadRole="theme-picker-list"]::item:selected {
+    background: #232830;
+    border-left: 2px solid #F59E0B;
+    color: #ECEEF1;
+}
+QListWidget[linuxcadRole="theme-picker-list"]::item:hover {
+    background: #232830;
+}
+QPushButton[linuxcadRole="theme-picker-apply"] {
+    background: #F59E0B;
+    color: #14171C;
+    border: 1px solid #B36F00;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-weight: 600;
+}
+QPushButton[linuxcadRole="theme-picker-apply"]:hover { background: #FFB933; }
+QPushButton[linuxcadRole="theme-picker-apply"]:pressed { background: #B36F00; color: #FFFFFF; }
+QPushButton[linuxcadRole="theme-picker-close"] {
+    background: transparent;
+    color: #A8AEB8;
+    border: 1px solid #2C323B;
+    border-radius: 4px;
+    padding: 6px 14px;
+}
+QPushButton[linuxcadRole="theme-picker-close"]:hover {
+    background: #232830;
+    color: #ECEEF1;
+}
+
+/* Disabled state text colour for QLabel inside dialogs / docks -------- */
+QLabel:disabled { color: #6B7280; }

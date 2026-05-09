@@ -392,7 +392,13 @@ QPixmap SplashScreen::splashImage()
                 painter.drawText(x, y, title);
             }
             painter.setFont(fontVer);
-            painter.drawText(x + (l + 235), y - 7, version);
+            if (title == QLatin1String("LinuxCAD")) {
+                // Splash artwork already includes the product name; place version only.
+                painter.drawText(x, y, version);
+            }
+            else {
+                painter.drawText(x + (l + 235), y - 7, version);
+            }
             QColor warningColor(QString::fromStdString(wc->second));
             if (suffix == QLatin1String("dev") && warningColor.isValid()) {
                 fontVer.setPointSizeF(14.0);

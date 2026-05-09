@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
-  <!-- Isometric cube: top #2C323B, right #1B1F25, left #232830; chamfer highlight #F59E0B -->
-  <g stroke="#3A4150" stroke-width="1.5" stroke-linejoin="miter">
-    <!-- Right face -->
-    <path fill="#1B1F25" d="M206 104 L241 155 L156 222 L147.5 133.25 Z"/>
-    <!-- Left face -->
-    <path fill="#232830" d="M50 104 L15 155 L100 222 L108.5 133.25 Z"/>
-    <!-- Top face (chamfer replaces front corner) -->
-    <path fill="#2C323B" d="M128 65 L206 104 L147.5 133.25 L108.5 133.25 L50 104 Z"/>
-    <!-- Chamfer facet -->
-    <path fill="#F59E0B" stroke="#3A4150" d="M147.5 133.25 L128 143 L108.5 133.25 Z"/>
+  <rect x="16" y="16" width="224" height="224" rx="40" fill="#14181E"/>
+  <rect x="16" y="16" width="224" height="224" rx="40" stroke="#2E3642" stroke-width="4"/>
+  <g transform="translate(48 52) scale(4)" stroke="#434E5D" stroke-width="0.9" stroke-linejoin="round">
+    <path fill="#1B2028" d="M46 23 L52 32 L37 44 L35.5 28 Z"/>
+    <path fill="#232A33" d="M18 23 L12 32 L27 44 L28.5 28 Z"/>
+    <path fill="#2D3540" d="M32 16 L46 23 L35.5 28 L28.5 28 L18 23 Z"/>
+    <path fill="#F59E0B" stroke="#AD6E00" stroke-width="0.5"
+          d="M35.5 28 L37 33 L34 36 L32 31.5 Z M37 33 L40 30.5 L38.5 27.2 L35.5 28 Z"/>
+    <path fill="#FFB84D" opacity="0.88" d="M35.5 28 L32 30.2 L28.5 28 Z"/>
   </g>
+  <path fill="none" stroke="#ECEEF1" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"
+        d="M88 148 L88 176 L132 176"/>
 </svg>

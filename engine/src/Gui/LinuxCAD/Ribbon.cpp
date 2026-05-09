@@ -6,10 +6,13 @@
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QPointer>
-#include <QResizeEvent>
-#include <QScrollArea>
+#include <QList>
+#include <QSet>
+#include <QSettings>
+#include <QSignalBlocker>
 #include <QSizePolicy>
+#include <QStackedWidget>
+#include <QTabBar>
 #include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
@@ -17,9 +20,10 @@
 #include <QWidget>
 #endif
 
-#include <Base/Console.h>
 #include <Gui/Application.h>
 #include <Gui/MainWindow.h>
+#include <Gui/ViewProviderDocumentObject.h>
+#include <Gui/WorkbenchManager.h>
 
 #include "Ribbon.h"
 
@@ -55,6 +59,161 @@ QString humanizeToolBarTitle(const QToolBar* tb)
     return tb->objectName();
 }
 
+QString compactTabTitle(const QString& rawTitle)
+{
+    QString t = rawTitle.simplified();
+    t.replace(QStringLiteral("Workbench"), QString(), Qt::CaseInsensitive);
+    t.replace(QStringLiteral("Part Design"), QStringLiteral("PD"), Qt::CaseInsensitive);
+    t.replace(QStringLiteral("PartDesign"), QStringLiteral("PD"), Qt::CaseInsensitive);
+    t = t.simplified();
+    if (t.isEmpty()) {
+        t = rawTitle.simplified();
+    }
+    if (t.size() > 28) {
+        t = t.left(27) + QStringLiteral("…");
+    }
+    return t;
+}
+
+bool isIndividualViewsToolBar(QToolBar* tb)
+{
+    if (tb == nullptr) {
+        return false;
+    }
+    static const QSet<QString> kViewDirCommands = {
+        QStringLiteral("Std_ViewIsometric"),
+        QStringLiteral("Std_ViewFront"),
+        QStringLiteral("Std_ViewTop"),
+        QStringLiteral("Std_ViewRight"),
+        QStringLiteral("Std_ViewRear"),
+        QStringLiteral("Std_ViewBottom"),
+        QStringLiteral("Std_ViewLeft"),
+    };
+    QStringList names;
+    for (auto* act : tb->actions()) {
+        if (act == nullptr || !act->isVisible() || act->isSeparator()) {
+            continue;
+        }
+        const QString n = act->objectName();
+        if (n.isEmpty()) {
+            continue;
+        }
+        if (!kViewDirCommands.contains(n)) {
+            return false;
+        }
+        names.append(n);
+    }
+    // Std workbench exposes exactly these seven; allow subset if user customized.
+    return names.size() >= 3;
+}
+
+bool shouldSkipByTitle(const QString& title)
+{
+    const QString t = title.trimmed().toLower();
+    if (t.isEmpty()) {
+        return true;
+    }
+
+    // StdWorkbench: "Individual Views" — redundant with NaviCube + overlay.
+    if (t.contains(QStringLiteral("individual")) || t.contains(QStringLiteral("individual view"))) {
+        return true;
+    }
+
+    // Remove global utility groups that duplicate menubar/logo actions.
+    static const QStringList kSkipExact = {
+        QStringLiteral("file"),
+        QStringLiteral("edit"),
+        QStringLiteral("clipboard"),
+        QStringLiteral("macro"),
+        QStringLiteral("view"),
+        QStringLiteral("help"),
+        QStringLiteral("workbench"),
+        QStringLiteral("structure"),
+    };
+    if (kSkipExact.contains(t)) {
+        return true;
+    }
+
+    // Skip noisy Part Design strips (optional clutter); do not use broad
+    // "helper" — it matches "Visual Helpers" and hides Sketcher tabs.
+    static const QStringList kSkipContains = {
+        QStringLiteral("dress-up"),
+        QStringLiteral("transformation"),
+    };
+    for (const QString& token : kSkipContains) {
+        if (t.contains(token)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/// Toolbars Sketcher shows with Unavailable policy until edit mode; their
+/// menu toggles stay hidden even though the toolbar exists and should appear
+/// in the ribbon while Sketcher is active.
+bool isSketcherEditRibbonToolbar(const QString& titleLower)
+{
+    static const QStringList kTitles = {
+        QStringLiteral("edit mode"),
+        QStringLiteral("geometries"),
+        QStringLiteral("constraints"),
+        QStringLiteral("sketcher tools"),
+        QStringLiteral("b-spline tools"),
+        QStringLiteral("visual helpers"),
+        QStringLiteral("sketcher helpers"),
+        QStringLiteral("sketcher edit tools"),
+    };
+    for (const QString& key : kTitles) {
+        if (titleLower == key) {
+            return true;
+        }
+    }
+    return false;
+}
+
+QString activeWorkbenchName()
+{
+    if (auto* mgr = Gui::WorkbenchManager::instance()) {
+        const std::string active = mgr->activeName();
+        if (!active.empty()) {
+            return QString::fromUtf8(active.c_str());
+        }
+    }
+    return QStringLiteral("(none)");
+}
+
+QList<QAction*> normalizedActionsForRibbon(QToolBar* sourceToolBar)
+{
+    QList<QAction*> normalized;
+    if (sourceToolBar == nullptr) {
+        return normalized;
+    }
+
+    bool pendingSeparator = false;
+    bool hasAnyVisibleCommand = false;
+    for (auto* act : sourceToolBar->actions()) {
+        if (act == nullptr || !act->isVisible()) {
+            continue;
+        }
+        if (act->isSeparator()) {
+            // Keep separators only between visible command clusters.
+            pendingSeparator = !normalized.isEmpty();
+            continue;
+        }
+        if (pendingSeparator) {
+            normalized.push_back(nullptr);
+            pendingSeparator = false;
+        }
+        normalized.push_back(act);
+        hasAnyVisibleCommand = true;
+    }
+
+    if (!hasAnyVisibleCommand) {
+        normalized.clear();
+    }
+    return normalized;
+}
+
 QToolButton* makeRibbonButton(QAction* action, QWidget* parent)
 {
     auto* btn = new QToolButton(parent);
@@ -77,27 +236,45 @@ Ribbon::Ribbon(QWidget* parent)
     setObjectName(QStringLiteral("LinuxCadRibbon"));
     setProperty("linuxcadRole", QStringLiteral("ribbon"));
 
-    auto* outer = new QHBoxLayout(this);
+    auto* outer = new QVBoxLayout(this);
     outer->setContentsMargins(0, 0, 0, 0);
-    outer->setSpacing(0);
+    outer->setSpacing(4);
 
-    scroll_ = new QScrollArea(this);
-    scroll_->setObjectName(QStringLiteral("LinuxCadRibbonScroll"));
-    scroll_->setWidgetResizable(true);
-    scroll_->setFrameShape(QFrame::NoFrame);
-    scroll_->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    scroll_->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    scroll_->setProperty("linuxcadRole", QStringLiteral("ribbon-scroll"));
+    tabBar_ = new QTabBar(this);
+    tabBar_->setObjectName(QStringLiteral("LinuxCadRibbonTabs"));
+    tabBar_->setProperty("linuxcadRole", QStringLiteral("ribbon-tabs"));
+    tabBar_->setExpanding(false);
+    tabBar_->setDocumentMode(true);
+    tabBar_->setMovable(false);
+    tabBar_->setUsesScrollButtons(true);
+    tabBar_->setDrawBase(false);
+    tabBar_->setShape(QTabBar::RoundedNorth);
+    tabBar_->setElideMode(Qt::ElideRight);
+    tabBar_->setMinimumHeight(28);
+    tabBar_->setMaximumHeight(28);
+    connect(tabBar_, &QTabBar::currentChanged, this, &Ribbon::onTabChanged);
+    outer->addWidget(tabBar_);
 
-    content_ = new QWidget(scroll_);
-    content_->setProperty("linuxcadRole", QStringLiteral("ribbon-content"));
-    row_ = new QHBoxLayout(content_);
-    row_->setContentsMargins(8, 4, 8, 4);
-    row_->setSpacing(0);
-    row_->addStretch();
+    auto* divider = new QFrame(this);
+    divider->setObjectName(QStringLiteral("LinuxCadRibbonDivider"));
+    divider->setProperty("linuxcadRole", QStringLiteral("ribbon-tab-divider"));
+    divider->setFrameShape(QFrame::NoFrame);
+    divider->setMinimumHeight(1);
+    divider->setMaximumHeight(1);
+    outer->addWidget(divider);
 
-    scroll_->setWidget(content_);
-    outer->addWidget(scroll_);
+    stack_ = new QStackedWidget(this);
+    stack_->setObjectName(QStringLiteral("LinuxCadRibbonStack"));
+    stack_->setProperty("linuxcadRole", QStringLiteral("ribbon-stack"));
+    stack_->setMinimumHeight(72);
+    stack_->setMaximumHeight(78);
+    connect(tabBar_, &QTabBar::currentChanged, stack_, &QStackedWidget::setCurrentIndex);
+    outer->addWidget(stack_);
+
+    rebuildDebounce_ = new QTimer(this);
+    rebuildDebounce_->setSingleShot(true);
+    rebuildDebounce_->setInterval(140);
+    connect(rebuildDebounce_, &QTimer::timeout, this, &Ribbon::onRebuildDebounce);
 
     // Subscribe to workbench activation. FreeCAD signals via boost::signals2;
     // any throw escaping the slot would tear down the application, so we
@@ -107,6 +284,12 @@ Ribbon::Ribbon(QWidget* parent)
             app->signalActivateWorkbench.connect([this](const char* /*name*/) {
                 scheduleRebuild();
             });
+            app->signalInEdit.connect([this](const Gui::ViewProviderDocumentObject&) {
+                scheduleRebuild();
+            });
+            app->signalResetEdit.connect([this](const Gui::ViewProviderDocumentObject&) {
+                scheduleRebuild();
+            });
         }
         catch (...) {
             // Defensive: never let a signal hookup break the UI.
@@ -114,16 +297,25 @@ Ribbon::Ribbon(QWidget* parent)
     }
 
     // First fill happens once the host MainWindow's toolbars are populated.
-    QTimer::singleShot(0, this, &Ribbon::rebuild);
+    scheduleRebuild();
 }
 
 Ribbon::~Ribbon() = default;
 
+void Ribbon::onRebuildDebounce()
+{
+    rebuild();
+    // A second pass catches workbenches (e.g. OpenSCAD) that populate toolbars lazily.
+    QTimer::singleShot(260, this, [this]() {
+        rebuild();
+    });
+}
+
 void Ribbon::scheduleRebuild()
 {
-    // Workbench activation populates QToolBars asynchronously - run on the
-    // next event-loop tick so we observe the populated state.
-    QTimer::singleShot(0, this, &Ribbon::rebuild);
+    if (rebuildDebounce_ != nullptr) {
+        rebuildDebounce_->start();
+    }
 }
 
 bool Ribbon::shouldSkipToolBar(QToolBar* tb) const
@@ -134,80 +326,104 @@ bool Ribbon::shouldSkipToolBar(QToolBar* tb) const
     if (isLinuxCadChrome(tb->objectName())) {
         return true;
     }
-    // Ignore empty toolbars; they'd render as an empty group label.
-    if (tb->actions().isEmpty()) {
+    if (tb->objectName().compare(QLatin1String("Individual Views"), Qt::CaseInsensitive) == 0) {
         return true;
     }
-    // Status-bar toolbars and tiny utility toolbars often have <2 actions.
-    int visibleActions = 0;
-    for (auto* act : tb->actions()) {
-        if (act != nullptr && !act->isSeparator() && act->isVisible()) {
-            ++visibleActions;
+    if (isIndividualViewsToolBar(tb)) {
+        return true;
+    }
+    const QString rawTitle = humanizeToolBarTitle(tb);
+    const QString titleLower = rawTitle.trimmed().toLower();
+    if (shouldSkipByTitle(rawTitle)) {
+        return true;
+    }
+    const QString wb = activeWorkbenchName();
+    const bool sketcherWb = wb.contains(QLatin1String("Sketcher"), Qt::CaseInsensitive);
+    const bool allowHiddenToggle = sketcherWb && isSketcherEditRibbonToolbar(titleLower);
+
+    // FreeCAD keeps non-active-workbench toolbars unavailable by hiding their
+    // toggle actions. Use that as the active-workbench filter, except for
+    // Sketcher edit-mode toolbars (toggle hidden until ForceAvailable).
+    if (!allowHiddenToggle) {
+        if (auto* viewAction = tb->toggleViewAction()) {
+            if (!viewAction->isVisible()) {
+                return true;
+            }
         }
     }
-    return visibleActions == 0;
+    return normalizedActionsForRibbon(tb).isEmpty();
 }
 
-QWidget* Ribbon::buildGroup(QToolBar* sourceToolBar)
+QWidget* Ribbon::buildPage(QToolBar* sourceToolBar)
 {
-    auto* group = new QWidget(content_);
-    group->setProperty("linuxcadRole", QStringLiteral("ribbon-group"));
+    const QList<QAction*> normalizedActions = normalizedActionsForRibbon(sourceToolBar);
+    if (normalizedActions.isEmpty()) {
+        return nullptr;
+    }
 
-    auto* col = new QVBoxLayout(group);
-    col->setContentsMargins(6, 0, 6, 0);
-    col->setSpacing(2);
+    auto* page = new QWidget(stack_);
+    page->setProperty("linuxcadRole", QStringLiteral("ribbon-page"));
 
-    auto* row = new QHBoxLayout();
-    row->setContentsMargins(0, 0, 0, 0);
-    row->setSpacing(2);
-    col->addLayout(row);
+    auto* row = new QHBoxLayout(page);
+    row->setContentsMargins(10, 8, 10, 8);
+    row->setSpacing(4);
+    row->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
-    for (auto* act : sourceToolBar->actions()) {
+    for (auto* act : normalizedActions) {
         if (act == nullptr) {
-            continue;
-        }
-        if (act->isSeparator()) {
-            auto* sep = new QFrame(group);
+            auto* sep = new QFrame(page);
             sep->setFrameShape(QFrame::VLine);
             sep->setFrameShadow(QFrame::Plain);
             sep->setProperty("linuxcadRole", QStringLiteral("ribbon-inner-sep"));
             row->addWidget(sep);
             continue;
         }
-        if (!act->isVisible()) {
-            continue;
-        }
-        row->addWidget(makeRibbonButton(act, group));
+        row->addWidget(makeRibbonButton(act, page));
     }
-
-    auto* label = new QLabel(humanizeToolBarTitle(sourceToolBar), group);
-    label->setAlignment(Qt::AlignHCenter);
-    label->setProperty("linuxcadRole", QStringLiteral("ribbon-group-label"));
-    col->addWidget(label);
-
-    return group;
+    row->addStretch();
+    return page;
 }
 
-void Ribbon::clearGroups()
+void Ribbon::clearTabs()
 {
-    if (row_ == nullptr) {
+    if (tabBar_ == nullptr || stack_ == nullptr) {
         return;
     }
-    while (row_->count() > 0) {
-        QLayoutItem* item = row_->takeAt(0);
-        if (item == nullptr) {
-            continue;
-        }
-        if (auto* w = item->widget()) {
+
+    QTabBar* const tabs = tabBar_;
+    const QSignalBlocker blocker(tabBar_);
+
+    while (tabs->count() > 0) {
+        tabs->removeTab(0);
+    }
+    while (stack_->count() > 0) {
+        auto* w = stack_->widget(0);
+        stack_->removeWidget(w);
+        if (w != nullptr) {
             w->deleteLater();
         }
-        delete item;
     }
+    tabTitleByIndex_.clear();
+}
+
+void Ribbon::onTabChanged(int idx)
+{
+    if (stack_ != nullptr) {
+        stack_->setCurrentIndex(idx);
+    }
+    if (tabBar_ == nullptr || idx < 0 || idx >= tabBar_->count()) {
+        return;
+    }
+
+    QSettings s;
+    s.beginGroup(QStringLiteral("LinuxCAD/Ribbon/ActiveTab"));
+    s.setValue(activeWorkbenchName(), tabTitleByIndex_.value(idx, tabBar_->tabText(idx)));
+    s.endGroup();
 }
 
 void Ribbon::rebuild()
 {
-    if (row_ == nullptr || content_ == nullptr) {
+    if (tabBar_ == nullptr || stack_ == nullptr) {
         return;
     }
 
@@ -216,7 +432,18 @@ void Ribbon::rebuild()
         return;
     }
 
-    clearGroups();
+    const QString prevTitle = tabBar_->currentIndex() >= 0 ? tabBar_->tabText(tabBar_->currentIndex())
+                                                            : QString();
+
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("LinuxCAD/Ribbon/ActiveTab"));
+    QString wantedTitle = settings.value(activeWorkbenchName()).toString();
+    settings.endGroup();
+    if (wantedTitle.isEmpty()) {
+        wantedTitle = prevTitle;
+    }
+
+    clearTabs();
 
     bool addedAny = false;
     const auto toolBars = mw->findChildren<QToolBar*>();
@@ -225,41 +452,48 @@ void Ribbon::rebuild()
             continue;
         }
 
-        // Hide the original toolbar so its icons don't appear above the canvas
-        // alongside the ribbon. The actions stay alive and are reachable both
-        // through the ribbon and any keyboard shortcut FreeCAD assigned them.
         if (tb->isVisible()) {
             tb->setVisible(false);
         }
-        if (auto* viewAct = tb->toggleViewAction()) {
-            viewAct->setVisible(false);
-        }
-
-        if (auto* group = buildGroup(tb)) {
-            row_->addWidget(group);
-
-            auto* divider = new QFrame(content_);
-            divider->setFrameShape(QFrame::VLine);
-            divider->setFrameShadow(QFrame::Plain);
-            divider->setProperty("linuxcadRole", QStringLiteral("ribbon-divider"));
-            row_->addWidget(divider);
-
+        if (auto* page = buildPage(tb)) {
+            const QString tabTitle = compactTabTitle(humanizeToolBarTitle(tb));
+            const int idx = stack_->addWidget(page);
+            tabBar_->addTab(tabTitle);
+            tabTitleByIndex_.insert(idx, tabTitle);
             addedAny = true;
         }
     }
 
-    if (addedAny) {
-        // Keep a trailing stretch so groups left-align nicely.
-        row_->addStretch();
-    }
-    else {
-        // Empty workbench placeholder so the bar height stays stable.
-        auto* placeholder = new QLabel(tr("No tools for this workbench"), content_);
+    if (!addedAny) {
+        auto* page = new QWidget(stack_);
+        page->setProperty("linuxcadRole", QStringLiteral("ribbon-page"));
+        auto* layout = new QHBoxLayout(page);
+        layout->setContentsMargins(10, 8, 10, 8);
+        layout->setSpacing(0);
+
+        auto* placeholder = new QLabel(tr("No tools for this workbench"), page);
         placeholder->setProperty("linuxcadRole", QStringLiteral("ribbon-empty"));
         placeholder->setAlignment(Qt::AlignCenter);
-        row_->addWidget(placeholder);
-        row_->addStretch();
+        layout->addStretch();
+        layout->addWidget(placeholder);
+        layout->addStretch();
+
+        const int idx = stack_->addWidget(page);
+        const QString tabTitle = QStringLiteral("—");
+        tabBar_->addTab(tabTitle);
+        tabTitleByIndex_.insert(idx, tabTitle);
     }
+
+    int targetIndex = 0;
+    if (!wantedTitle.isEmpty()) {
+        for (int i = 0; i < tabBar_->count(); ++i) {
+            if (tabBar_->tabText(i) == wantedTitle) {
+                targetIndex = i;
+                break;
+            }
+        }
+    }
+    tabBar_->setCurrentIndex(targetIndex);
 }
 
 } // namespace LinuxCAD

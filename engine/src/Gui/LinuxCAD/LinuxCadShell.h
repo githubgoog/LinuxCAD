@@ -3,7 +3,7 @@
 // LinuxCAD shell - public entry point.
 //
 // Hooks into the existing Gui::MainWindow to install the LinuxCAD-branded
-// chrome (top bar, project manager dock, welcome screen, theme) without
+// chrome (top bar, ribbon, theme) without
 // touching any of FreeCAD's modeling UI.
 
 #ifndef GUI_LINUXCAD_SHELL_H
@@ -20,15 +20,15 @@ namespace LinuxCAD {
 
 class TopBar;
 class Ribbon;
-class ProjectManagerDock;
-class WelcomeScreen;
-class ProjectManager;
 class Theme;
 class CommandPalette;
 class ViewWidgetsOverlay;
 class SuggestionEngine;
 class GhostToast;
 class Provider;
+class LinuxCadStart;
+
+GuiExport void refreshDockChromeTint();
 
 /// Install LinuxCAD shell on the given MainWindow.
 ///
@@ -48,9 +48,6 @@ public:
     Gui::MainWindow*    mainWindow() const { return mainWindow_; }
     TopBar*             topBar() const { return topBar_; }
     Ribbon*             ribbon() const { return ribbon_; }
-    ProjectManagerDock* projectDock() const { return projectDock_; }
-    WelcomeScreen*      welcomeScreen() const { return welcomeScreen_; }
-    ProjectManager*     projectManager() const { return projectManager_; }
     Theme*              theme() const { return theme_; }
     CommandPalette*     commandPalette() const { return commandPalette_; }
     SuggestionEngine*   suggestionEngine() const { return suggestionEngine_; }
@@ -60,9 +57,6 @@ public:
     /// Recreate the AI Provider from settings and attach it to SuggestionEngine.
     void reloadAiProvider();
 
-    /// Open the sketch-first creation flow (pick plane + Sketcher_NewSketch).
-    void newSketchInteractive();
-
 private:
     friend GuiExport void install(Gui::MainWindow* mw);
 
@@ -71,14 +65,16 @@ private:
     Shell(const Shell&) = delete;
     Shell& operator=(const Shell&) = delete;
 
+    bool anyDocumentOpen() const;
+    void ensureStartViewInstalled();
+    void refreshStartViewVisibility();
+
     Gui::MainWindow*    mainWindow_      = nullptr;
     TopBar*             topBar_          = nullptr;
     Ribbon*             ribbon_          = nullptr;
-    ProjectManagerDock* projectDock_     = nullptr;
-    WelcomeScreen*      welcomeScreen_   = nullptr;
-    ProjectManager*     projectManager_  = nullptr;
     Theme*              theme_           = nullptr;
     CommandPalette*     commandPalette_  = nullptr;
+    LinuxCadStart*      startView_       = nullptr;
     ViewWidgetsOverlay* viewWidgets_     = nullptr;
     SuggestionEngine*   suggestionEngine_= nullptr;
     GhostToast*         ghostToast_      = nullptr;

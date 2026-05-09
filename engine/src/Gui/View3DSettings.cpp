@@ -288,8 +288,8 @@ void View3DSettings::OnChange(ParameterGrp::SubjectType& rCaller, ParameterGrp::
     else if (strcmp(Reason, "NavigationStyle") == 0) {
         if (!ignoreNavigationStyle) {
             // check whether the simple or the full mouse model is used
-            std::string model
-                = rGrp.GetASCII("NavigationStyle", CADNavigationStyle::getClassTypeId().getName());
+            std::string model = rGrp.GetASCII("NavigationStyle",
+                                              LinuxCadNavigationStyle::getClassTypeId().getName());
             Base::Type type = Base::Type::fromName(model.c_str());
             for (auto _viewer : _viewers) {
                 _viewer->setNavigationType(type);

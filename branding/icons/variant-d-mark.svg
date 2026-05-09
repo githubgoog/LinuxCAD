@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>LinuxCAD Variant D Mark</title>
+  <desc>Balanced keycap with integrated amber L at front-right vertex.</desc>
+
+  <polygon points="58,82 172,58 220,92 106,116" fill="#2C333E"/>
+  <polygon points="106,116 220,92 220,178 106,204" fill="#3A4452"/>
+  <polygon points="58,82 106,116 106,204 58,170" fill="#1F252D"/>
+
+  <polyline points="58,82 172,58 220,92 220,178 106,204 58,170 58,82"
+            stroke="#5C6877" stroke-width="3.2" stroke-linejoin="round"/>
+  <line x1="106" y1="116" x2="106" y2="204" stroke="#5C6877" stroke-width="2.4"/>
+
+  <path d="M201 150 L220 150 L220 168 L184 168 L184 132 L201 132 Z" fill="#F59E0B"/>
+  <path d="M201 168 L220 168 L220 186 L168 186 L168 132 L184 132 L184 168 Z" fill="#C87F00"/>
+</svg>

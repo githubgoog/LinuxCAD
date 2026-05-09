@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
-  <rect x="4" y="4" width="56" height="56" rx="8" ry="8" fill="#232830"/>
-  <!-- Chamfer facet only (amber triangle) -->
-  <path fill="#F59E0B" d="M46 10 L54 22 L22 42 Z"/>
-  <path fill="none" stroke="#3A4150" stroke-width="1.25" stroke-linejoin="miter"
-        d="M46 10 L54 22 L22 42 Z"/>
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#14181E"/>
+  <rect x="4" y="4" width="56" height="56" rx="12" stroke="#2E3642" stroke-width="1.2"/>
+  <g transform="translate(8 10)" stroke="#434E5D" stroke-width="0.9" stroke-linejoin="round">
+    <path fill="#1B2028" d="M46 23 L52 32 L37 44 L35.5 28 Z"/>
+    <path fill="#232A33" d="M18 23 L12 32 L27 44 L28.5 28 Z"/>
+    <path fill="#2D3540" d="M32 16 L46 23 L35.5 28 L28.5 28 L18 23 Z"/>
+    <path fill="#F59E0B" stroke="#AD6E00" stroke-width="0.5"
+          d="M35.5 28 L37 33 L34 36 L32 31.5 Z M37 33 L40 30.5 L38.5 27.2 L35.5 28 Z"/>
+    <path fill="#FFB84D" opacity="0.88" d="M35.5 28 L32 30.2 L28.5 28 Z"/>
+  </g>
+  <path fill="none" stroke="#ECEEF1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+        d="M24 34 L24 42 L34 42"/>
 </svg>

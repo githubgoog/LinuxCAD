@@ -174,13 +174,19 @@ freecad-stubs = "*"
 # from the engine/ directory so engine/CMakePresets.json works as-is.
 
 [tasks]
-initialize = { cmd = ["git", "submodule", "update", "--init", "--recursive"], cwd = "engine" }
+# Use system git here: conda-forge git in the Pixi env is often "minimal-git" without `git submodule`.
+initialize = {
+    cmd    = ["/usr/bin/git", "submodule", "update", "--init", "--recursive"],
+    cwd    = "engine",
+}
 apply-branding = { cmd = ["bash", "branding/apply-branding.sh"] }
+validate-build-path = { cmd = ["bash", "scripts/validate-build-path.sh"], cwd = "." }
 build-release = { cmd = ["cmake", "--build", "build/release", "--config", "Release"], cwd = "engine" }
 install-release = { cmd = ["cmake", "--install", "build/release", "--config", "Release"], cwd = "engine", depends-on = ["build-release"] }
 
 # Top-level convenience: configure + build + install in one shot.
 linuxcad-release = [
+    { task = "validate-build-path" },
     { task = "apply-branding" },
     { task = "configure-release" },
     { task = "build-release" },
@@ -199,7 +205,7 @@ configure-release = { cmd = [
     "cmake", "--preset", "conda-linux-release",
     "-DPACKAGE_NAME=LinuxCAD",
     "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
-], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+], cwd = "engine", depends-on = ["validate-build-path", "initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
 package-os = { cmd = ["bash", "packaging/linux/build-appimage.sh"], depends-on = ["install-release"] }
 launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
 
@@ -208,7 +214,7 @@ configure-release = { cmd = [
     "cmake", "--preset", "conda-linux-release",
     "-DPACKAGE_NAME=LinuxCAD",
     "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
-], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+], cwd = "engine", depends-on = ["validate-build-path", "initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
 package-os = { cmd = ["bash", "packaging/linux/build-appimage.sh"], depends-on = ["install-release"] }
 launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
 
@@ -217,7 +223,7 @@ configure-release = { cmd = [
     "cmake", "--preset", "conda-macos-release",
     "-DPACKAGE_NAME=LinuxCAD",
     "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
-], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+], cwd = "engine", depends-on = ["validate-build-path", "initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
 package-os = { cmd = ["bash", "packaging/macos/build-dmg.sh"], depends-on = ["install-release"] }
 launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
 
@@ -226,7 +232,7 @@ configure-release = { cmd = [
     "cmake", "--preset", "conda-macos-release",
     "-DPACKAGE_NAME=LinuxCAD",
     "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
-], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+], cwd = "engine", depends-on = ["validate-build-path", "initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
 package-os = { cmd = ["bash", "packaging/macos/build-dmg.sh"], depends-on = ["install-release"] }
 launch-os = { cmd = [".pixi/envs/default/bin/FreeCAD"], depends-on = ["install-release"] }
 
@@ -236,6 +242,6 @@ configure-release = { cmd = [
     "-DCMAKE_GENERATOR_PLATFORM=", "-DCMAKE_GENERATOR_TOOLSET=",
     "-DPACKAGE_NAME=LinuxCAD",
     "-DPACKAGE_VERSION_SUFFIX=-linuxcad",
-], cwd = "engine", depends-on = ["initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
+], cwd = "engine", depends-on = ["validate-build-path", "initialize", "apply-branding"], env = { CFLAGS = "", CXXFLAGS = "", DEBUG_CFLAGS = "", DEBUG_CXXFLAGS = "" } }
 package-os = { cmd = ["pwsh", "-NoProfile", "-File", "packaging/windows/build-zip.ps1"], depends-on = ["install-release"] }
 launch-os = { cmd = [".pixi/envs/default/Library/bin/FreeCAD.exe"], depends-on = ["install-release"] }

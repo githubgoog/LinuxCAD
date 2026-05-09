@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>LinuxCAD - Variant C glyph: Drafting L (compact)</title>
+
+  <!-- Same Drafting L geometry as Variant A but tighter, no ticks -->
+  <path d="M 88 48 L 120 48 L 120 176 L 224 176 L 224 208 L 88 208 Z"
+        fill="#1B1F25" stroke="#3A4150" stroke-width="2" stroke-linejoin="miter" />
+
+  <!-- Inner highlight along the inside corner -->
+  <path d="M 120 48 L 120 176 L 224 176"
+        stroke="#2C323B" stroke-width="1" fill="none" />
+
+  <!-- Amber chamfer at the inner right-angle corner -->
+  <path d="M 120 152 L 144 176 L 120 176 Z"
+        fill="#F59E0B" />
+
+  <!-- Single amber dot (compass-arc reference, ties to the wordmark's C) -->
+  <circle cx="200" cy="72" r="6" fill="#F59E0B" />
+</svg>

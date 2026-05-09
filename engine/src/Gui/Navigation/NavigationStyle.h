@@ -389,24 +389,6 @@ protected:
     SbBool processSoEvent(const SoEvent* const ev) override;
 };
 
-class GuiExport CADNavigationStyle: public UserNavigationStyle
-{
-    using inherited = UserNavigationStyle;
-
-    TYPESYSTEM_HEADER_WITH_OVERRIDE();
-
-public:
-    CADNavigationStyle();
-    ~CADNavigationStyle() override;
-    const char* mouseButtons(ViewerMode) override;
-
-protected:
-    SbBool processSoEvent(const SoEvent* const ev) override;
-
-private:
-    SbBool lockButton1 {false};
-};
-
 class GuiExport RevitNavigationStyle: public UserNavigationStyle
 {
     using inherited = UserNavigationStyle;
@@ -590,6 +572,17 @@ protected:
 
 private:
     SbBool blockPan {false};
+};
+
+class GuiExport CADNavigationStyle: public LinuxCadNavigationStyle
+{
+    using inherited = LinuxCadNavigationStyle;
+
+    TYPESYSTEM_HEADER();
+
+public:
+    CADNavigationStyle();
+    ~CADNavigationStyle() override;
 };
 
 }  // namespace Gui

@@ -167,6 +167,10 @@ void WorkbenchDropdownButton::rebuildModel()
     wbs.sort(Qt::CaseInsensitive);
 
     for (const QString& wb : wbs) {
+        if (wb.compare(QLatin1String("NoneWorkbench"), Qt::CaseInsensitive) == 0) {
+            continue;
+        }
+
         QString display = app->workbenchMenuText(wb);
         if (display.isEmpty()) {
             display = wb;
@@ -272,6 +276,7 @@ void WorkbenchDropdownButton::activateRow(QListWidgetItem* item)
     }
     updatingDropdown_ = false;
     workbenchLabel(wb);
+    Q_EMIT workbenchActivated(wb);
 }
 
 void WorkbenchDropdownButton::workbenchLabel(const QString& wb)
@@ -280,13 +285,22 @@ void WorkbenchDropdownButton::workbenchLabel(const QString& wb)
         return;
     }
     auto* app = Gui::Application::Instance;
-    QString display = wb;
-    QPixmap icon;
-    if (app != nullptr) {
-        const QString menu = app->workbenchMenuText(wb);
-        if (!menu.isEmpty()) {
-            display = menu;
+    QString display;
+    if (wb.compare(QLatin1String("NoneWorkbench"), Qt::CaseInsensitive) == 0) {
+        display = tr("Select workbench...");
+    }
+    else if (app != nullptr) {
+        display = app->workbenchMenuText(wb);
+        if (display.isEmpty()) {
+            display = wb;
         }
+    }
+    else {
+        display = wb.isEmpty() ? tr("Workbench") : wb;
+    }
+    QPixmap icon;
+    if (app != nullptr
+        && wb.compare(QLatin1String("NoneWorkbench"), Qt::CaseInsensitive) != 0) {
         icon = app->workbenchIcon(wb);
     }
     textLabel_->setText(display);

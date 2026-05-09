@@ -2775,6 +2775,7 @@ void Application::reloadStyleSheet()
 
     setStyleSheet(qssFile, tiledBackground);
     OverlayManager::instance()->refresh(nullptr, true);
+    OverlayManager::instance()->refreshIcons();
 }
 
 QString Application::replaceVariablesInQss(const QString& qssText)

@@ -17,7 +17,7 @@ namespace LinuxCAD {
 
 namespace {
 
-constexpr const char* kFlagKey = "LinuxCAD/NaviCubeDefaultsAppliedV1";
+constexpr const char* kFlagKey = "LinuxCAD/NaviCubeDefaultsAppliedV2";
 
 ParameterGrp::handle naviCubeGroup()
 {
@@ -45,12 +45,14 @@ void writeDefaults()
     nc->SetInt("NaviStepByTurn", 12);            // smoother snap animation
     nc->SetFloat("BorderWidth", 0.6f);           // subtler edges
     nc->SetInt("InactiveOpacity", 55);           // 0-100, integer percent
+    // Bottom-left keeps the top-right clear for LinuxCAD view overlay + docks.
+    nc->SetInt("CornerNaviCube", 2);             // NaviCube::BottomLeftCorner
 
     // Colors are stored as packed RGBA uint32 (R high byte). LinuxCAD's
     // accent for highlight; soft slate base; white-ish emphase.
     constexpr unsigned long kBaseSlate    = 0xC8D0DCFFu;  // soft slate face
     constexpr unsigned long kEmphaseWhite = 0xFFFFFFFFu;  // crisp emphase
-    constexpr unsigned long kHiliteAccent = 0x418FDEFFu;  // LinuxCAD blue
+    constexpr unsigned long kHiliteAccent = 0xF59E0BFFu;  // amber accent
     nc->SetUnsigned("BaseColor",    kBaseSlate);
     nc->SetUnsigned("EmphaseColor", kEmphaseWhite);
     nc->SetUnsigned("HiliteColor",  kHiliteAccent);

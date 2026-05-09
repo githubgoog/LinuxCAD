@@ -207,6 +207,8 @@ public:
     void syncAutoMode();
     // Establish if stylesheet is dark
     static bool isStyleSheetDark(std::string curStyleSheet);
+    /// True when dock title bars sit on dark chrome (LinuxCAD dark QSS, etc.).
+    static bool isOverlayChromeDark();
     // Rotate the AutoHide icon according to the dock area
     static QPixmap rotateAutoHideIcon(QPixmap pxAutoHide, Qt::DockWidgetArea dockArea);
 

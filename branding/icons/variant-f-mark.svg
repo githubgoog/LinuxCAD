@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>LinuxCAD Variant F Mark</title>
+  <desc>Mechanical keycap in charcoal with amber L at the user-facing right vertex.</desc>
+
+  <!-- Keycap top (slightly inset like a real keyboard cap) -->
+  <polygon points="64,78 174,56 216,88 106,110" fill="#2E3540"/>
+
+  <!-- Front face (user-facing) -->
+  <polygon points="106,110 216,88 216,170 106,194" fill="#3B4553"/>
+
+  <!-- Left face -->
+  <polygon points="64,78 106,110 106,194 64,162" fill="#20262E"/>
+
+  <!-- Cap frame -->
+  <polyline points="64,78 174,56 216,88 216,170 106,194 64,162 64,78"
+            stroke="#5B6676" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="106" y1="110" x2="106" y2="194" stroke="#5B6676" stroke-width="2.4"/>
+
+  <!-- Signature: amber L built directly on front-right vertex -->
+  <path d="M198 146 L216 146 L216 164 L188 164 L188 136 L198 136 Z" fill="#F59E0B"/>
+  <path d="M198 164 L216 164 L216 182 L170 182 L170 136 L188 136 L188 164 Z" fill="#D58900"/>
+</svg>

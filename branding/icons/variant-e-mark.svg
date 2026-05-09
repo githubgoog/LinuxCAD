@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>LinuxCAD Variant E Mark</title>
+  <desc>Technical keycap with CAD construction accents and amber L on user-facing vertex.</desc>
+
+  <polygon points="54,84 170,60 220,94 104,118" fill="#2B323D"/>
+  <polygon points="104,118 220,94 220,180 104,206" fill="#394352"/>
+  <polygon points="54,84 104,118 104,206 54,172" fill="#1D232B"/>
+
+  <polyline points="54,84 170,60 220,94 220,180 104,206 54,172 54,84"
+            stroke="#5E6A79" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="104" y1="118" x2="104" y2="206" stroke="#5E6A79" stroke-width="2.2"/>
+
+  <!-- CAD construction hints -->
+  <line x1="70" y1="96" x2="184" y2="72" stroke="#738093" stroke-width="1.8"/>
+  <line x1="118" y1="124" x2="206" y2="104" stroke="#738093" stroke-width="1.6"/>
+
+  <!-- Amber L anchored on the front-right corner -->
+  <path d="M198 148 L220 148 L220 166 L182 166 L182 130 L198 130 Z" fill="#F59E0B"/>
+  <path d="M198 166 L220 166 L220 186 L166 186 L166 130 L182 130 L182 166 Z" fill="#CE8400"/>
+</svg>

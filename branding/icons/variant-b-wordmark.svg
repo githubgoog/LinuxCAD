@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="80" viewBox="0 0 360 80" fill="none">
+  <title>LinuxCAD wordmark - Variant B (compass-arc C, no glyph)</title>
+
+  <!-- "Linux" -->
+  <text x="20" y="58"
+        font-family="Inter, 'Segoe UI', Roboto, 'Cantarell', 'Noto Sans', sans-serif"
+        font-size="44" font-weight="700"
+        letter-spacing="-0.02em"
+        fill="#ECEEF1">Linux</text>
+
+  <!-- Custom compass-arc C: 270deg arc + amber center dot -->
+  <g transform="translate(150 18)">
+    <path d="M 39 6 A 22 22 0 1 0 39 38"
+          stroke="#ECEEF1"
+          stroke-width="7"
+          stroke-linecap="round"
+          fill="none" />
+    <circle cx="22" cy="22" r="3.5" fill="#F59E0B" />
+  </g>
+
+  <!-- "AD" -->
+  <text x="208" y="58"
+        font-family="Inter, 'Segoe UI', Roboto, 'Cantarell', 'Noto Sans', sans-serif"
+        font-size="44" font-weight="700"
+        letter-spacing="-0.02em"
+        fill="#ECEEF1">AD</text>
+</svg>

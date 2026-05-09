@@ -38,6 +38,10 @@ public:
     /// active. Safe to call before the popup is ever opened.
     void syncToActive();
 
+Q_SIGNALS:
+    /// Emitted after a user-triggered dropdown workbench activation attempt.
+    void workbenchActivated(const QString& workbenchName);
+
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 

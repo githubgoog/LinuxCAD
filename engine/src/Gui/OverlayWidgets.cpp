@@ -40,6 +40,7 @@
 #include <QToolTip>
 #include <QTreeView>
 #include <QScrollBar>
+#include <QSettings>
 
 
 #include <QPainterPath>
@@ -478,13 +479,9 @@ OverlayTabWidget::OverlayTabWidget(QWidget* parent, Qt::DockWidgetArea pos)
 
 void OverlayTabWidget::refreshIcons()
 {
-    auto curStyleSheet = App::GetApplication()
-                             .GetParameterGroupByPath("User parameter:BaseApp/Preferences/MainWindow")
-                             ->GetASCII("StyleSheet", "None");
-
     QPixmap pxAutoHide;
 
-    if (isStyleSheetDark(curStyleSheet)) {
+    if (isOverlayChromeDark()) {
         actOverlay.setIcon(BitmapFactory().pixmap("qss:overlay/icons/overlay_light.svg"));
         actNoAutoMode.setIcon(BitmapFactory().pixmap("qss:overlay/icons/mode_light.svg"));
         actTaskShow.setIcon(BitmapFactory().pixmap("qss:overlay/icons/taskshow_light.svg"));
@@ -968,15 +965,11 @@ void OverlayTabWidget::retranslate()
 
 void OverlayTabWidget::syncAutoMode()
 {
-    auto curStyleSheet = App::GetApplication()
-                             .GetParameterGroupByPath("User parameter:BaseApp/Preferences/MainWindow")
-                             ->GetASCII("StyleSheet", "None");
-
     QAction* action = nullptr;
     switch (autoMode) {
         case AutoMode::AutoHide:
             action = &actAutoHide;
-            if (isStyleSheetDark(curStyleSheet)) {
+            if (isOverlayChromeDark()) {
                 QPixmap pxAutoHideMode = BitmapFactory().pixmap(
                     "qss:overlay/icons/autohide_lighter.svg"
                 );
@@ -999,7 +992,7 @@ void OverlayTabWidget::syncAutoMode()
             break;
         case AutoMode::EditShow:
             action = &actEditShow;
-            if (isStyleSheetDark(curStyleSheet)) {
+            if (isOverlayChromeDark()) {
                 QPixmap pxEditShowMode = BitmapFactory().pixmap(
                     "qss:overlay/icons/editshow_lighter.svg"
                 );
@@ -1026,7 +1019,7 @@ void OverlayTabWidget::syncAutoMode()
             break;
         case AutoMode::TaskShow:
             action = &actTaskShow;
-            if (isStyleSheetDark(curStyleSheet)) {
+            if (isOverlayChromeDark()) {
                 QPixmap pxTaskShowMode = BitmapFactory().pixmap(
                     "qss:overlay/icons/taskshow_lighter.svg"
                 );
@@ -1053,7 +1046,7 @@ void OverlayTabWidget::syncAutoMode()
             break;
         case AutoMode::EditHide:
             action = &actEditHide;
-            if (isStyleSheetDark(curStyleSheet)) {
+            if (isOverlayChromeDark()) {
                 QPixmap pxEditHideMode = BitmapFactory().pixmap(
                     "qss:overlay/icons/edithide_lighter.svg"
                 );
@@ -1080,7 +1073,7 @@ void OverlayTabWidget::syncAutoMode()
             break;
         default:
             action = &actNoAutoMode;
-            if (isStyleSheetDark(curStyleSheet)) {
+            if (isOverlayChromeDark()) {
                 QPixmap pxNoAutoMode = BitmapFactory().pixmap("qss:overlay/icons/mode_lighter.svg");
                 action->setIcon(pxNoAutoMode);
                 QPixmap pxAutoHideMode = BitmapFactory().pixmap("qss:overlay/icons/autohide_light.svg");
@@ -2101,6 +2094,31 @@ bool OverlayTabWidget::isStyleSheetDark(std::string curStyleSheet)
         return true;
     }
     return false;
+}
+
+bool OverlayTabWidget::isOverlayChromeDark()
+{
+    const auto curStyleSheet = App::GetApplication()
+                                   .GetParameterGroupByPath("User parameter:BaseApp/Preferences/MainWindow")
+                                   ->GetASCII("StyleSheet", "None");
+    if (isStyleSheetDark(curStyleSheet)) {
+        return true;
+    }
+    const QString appSs = qApp->styleSheet();
+    if (appSs.contains(QLatin1String("background: #14171C"), Qt::CaseInsensitive)
+        || appSs.contains(QLatin1String("background:#14171C"), Qt::CaseInsensitive)) {
+        return true;
+    }
+    QSettings settings;
+    const QString themeId = settings.value(QStringLiteral("LinuxCAD/Theme"), QStringLiteral("charcoal-amber"))
+                                 .toString()
+                                 .trimmed()
+                                 .toLower();
+    if (themeId == QStringLiteral("light-amber") || themeId == QStringLiteral("light")
+        || themeId == QStringLiteral("system")) {
+        return false;
+    }
+    return themeId == QStringLiteral("charcoal-amber") || themeId == QStringLiteral("dark");
 }
 
 QPixmap OverlayTabWidget::rotateAutoHideIcon(QPixmap pxAutoHide, Qt::DockWidgetArea dockArea)

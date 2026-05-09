@@ -15,10 +15,10 @@
     font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
     font-size="28"
     font-weight="600">
-    <tspan fill="#ECEEF1">Linux</tspan><tspan
-      fill="#ECEEF1"
+    <tspan fill="#E8ECF2" stroke="#10141B" stroke-width="0.45" paint-order="stroke fill">Linux</tspan><tspan
+      fill="#E8ECF2"
       stroke="#F59E0B"
-      stroke-width="0.85"
-      paint-order="stroke fill">C</tspan><tspan fill="#ECEEF1">AD</tspan>
+      stroke-width="0.9"
+      paint-order="stroke fill">C</tspan><tspan fill="#E8ECF2" stroke="#10141B" stroke-width="0.45" paint-order="stroke fill">AD</tspan>
   </text>
 </svg>

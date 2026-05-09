@@ -3,12 +3,14 @@
 #define GUI_LINUXCAD_RIBBON_H
 
 #include <FCGlobal.h>
+#include <QHash>
 #include <QWidget>
 
-class QHBoxLayout;
-class QScrollArea;
-class QWidget;
+class QTabBar;
+class QStackedWidget;
+class QSettings;
 class QToolBar;
+class QTimer;
 
 namespace Gui {
 namespace LinuxCAD {
@@ -34,17 +36,22 @@ public Q_SLOTS:
     /// Rebuild from the active workbench's toolbars. Safe to call any time.
     void rebuild();
 
-private Q_SLOTS:
+    /// Coalesce workbench swaps: FreeCAD reparents toolbar actions shortly after activation.
     void scheduleRebuild();
 
+private Q_SLOTS:
+    void onRebuildDebounce();
+    void onTabChanged(int index);
+
 private:
-    void clearGroups();
-    QWidget* buildGroup(QToolBar* sourceToolBar);
+    void clearTabs();
+    QWidget* buildPage(QToolBar* sourceToolBar);
     bool shouldSkipToolBar(QToolBar* tb) const;
 
-    QScrollArea* scroll_   = nullptr;
-    QWidget*     content_  = nullptr;
-    QHBoxLayout* row_      = nullptr;
+    QTimer* rebuildDebounce_ = nullptr;
+    QTabBar* tabBar_ = nullptr;
+    QStackedWidget* stack_ = nullptr;
+    QHash<int, QString> tabTitleByIndex_;
 };
 
 } // namespace LinuxCAD

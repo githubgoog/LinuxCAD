@@ -64,13 +64,11 @@ void applyUnits(bool imperialInches)
     }
 }
 
-void applyNavigation(bool unifiedTouchPad)
+void applyNavigation(bool /*unifiedTouchPad*/)
 {
     ParameterGrp::handle hGrp =
         App::GetApplication().GetParameterGroupByPath("User parameter:BaseApp/Preferences/View");
-
-    const char* ascii = unifiedTouchPad ? LinuxCadNavigationStyle::getClassTypeId().getName()
-                                         : CADNavigationStyle::getClassTypeId().getName();
+    const char* ascii = LinuxCadNavigationStyle::getClassTypeId().getName();
     hGrp->SetASCII("NavigationStyle", ascii);
 }
 
@@ -87,20 +85,16 @@ public:
         themeLight_      = nullptr;
         unitsMetric_     = nullptr;
         unitsImperial_   = nullptr;
-        navCad_          = nullptr;
-        navLinuxCad_     = nullptr;
         aiMock_          = nullptr;
         aiOpenAi_        = nullptr;
         aiAnthropic_     = nullptr;
 
         auto* pgTheme           = buildThemePage();
         auto* pgUnits           = buildUnitsPage();
-        auto* pgNav             = buildNavPage();
         auto* pgAi              = buildAiPage();
 
         addPage(pgTheme);
         addPage(pgUnits);
-        addPage(pgNav);
         addPage(pgAi);
 
         resize(560, 420);
@@ -150,29 +144,6 @@ private:
 
         lay->addWidget(unitsMetric_);
         lay->addWidget(unitsImperial_);
-        lay->addStretch();
-        return page;
-    }
-
-    QWizardPage* buildNavPage()
-    {
-        auto* page = new QWizardPage(this);
-        page->setTitle(tr("Navigation"));
-        page->setSubTitle(tr("How you orbit / pan / zoom the 3D view."));
-        auto* lay = new QVBoxLayout(page);
-
-        navCad_       = new QRadioButton(tr("Classic CAD mouse (FreeCAD defaults)"), page);
-        navLinuxCad_
-            = new QRadioButton(tr("LinuxCAD unified mouse + touchpad"), page);
-
-        navLinuxCad_->setChecked(true);
-
-        auto* grpNav = new QButtonGroup(page);
-        grpNav->addButton(navCad_);
-        grpNav->addButton(navLinuxCad_);
-
-        lay->addWidget(navLinuxCad_);
-        lay->addWidget(navCad_);
         lay->addStretch();
         return page;
     }
@@ -235,8 +206,8 @@ private:
         // --- Units ---
         applyUnits(unitsImperial_ != nullptr && unitsImperial_->isChecked());
 
-        // --- Navigation ---
-        applyNavigation(navLinuxCad_ != nullptr && navLinuxCad_->isChecked());
+        // --- Navigation: always LinuxCAD style; choice is no longer offered. ---
+        applyNavigation(true);
 
         // --- AI + consent bookkeeping ---
         QSettings st;
@@ -294,8 +265,6 @@ private:
     QRadioButton* themeLight_    = nullptr;
     QRadioButton* unitsMetric_   = nullptr;
     QRadioButton* unitsImperial_ = nullptr;
-    QRadioButton* navCad_        = nullptr;
-    QRadioButton* navLinuxCad_   = nullptr;
     QRadioButton* aiMock_        = nullptr;
     QRadioButton* aiOpenAi_      = nullptr;
     QRadioButton* aiAnthropic_ = nullptr;
@@ -337,6 +306,38 @@ void FirstRunWizard::promptIfNeeded(QWidget* parent)
 void FirstRunWizard::runAgain(QWidget* parent)
 {
     runAgainImpl(parent);
+}
+
+void FirstRunWizard::applySilentDefaults()
+{
+    QSettings s;
+    if (s.value(QLatin1String(FirstRunWizard::kCompletedKey), false).toBool()) {
+        return;
+    }
+
+    // Theme: dark by default.
+    Shell* shell = Shell::instance();
+    if (shell != nullptr && shell->theme() != nullptr) {
+        shell->theme()->applyVariant(Theme::Variant::Dark);
+    }
+
+    // Units: metric.
+    applyUnits(/*imperialInches=*/false);
+
+    // Navigation: LinuxCAD unified mouse + touchpad.
+    applyNavigation(/*unused*/ true);
+
+    // AI: mock provider, disabled, consent recorded as prompted (silent).
+    s.setValue(QString::fromLatin1(Provider::kSettingProvider),
+               QStringLiteral("mock"));
+    s.setValue(QString::fromLatin1(Provider::kSettingApiKey), QString());
+    s.setValue(QString::fromLatin1(Provider::kSettingModel), QString());
+    s.setValue(QString::fromLatin1(Provider::kSettingConsentGiven), false);
+    s.setValue(QString::fromLatin1(Provider::kSettingEnabled), false);
+    s.setValue(QLatin1String(kConsentPromptedKey), true);
+
+    s.setValue(QLatin1String(FirstRunWizard::kCompletedKey), true);
+    s.sync();
 }
 
 } // namespace LinuxCAD

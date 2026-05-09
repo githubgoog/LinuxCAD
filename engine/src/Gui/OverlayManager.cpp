@@ -433,9 +433,16 @@ public:
 
     void refreshIcons()
     {
-        _actFloat.setIcon(BitmapFactory().pixmap("qss:overlay/icons/float.svg"));
-        _actOverlay.setIcon(BitmapFactory().pixmap("qss:overlay/icons/overlay.svg"));
-        _actClose.setIcon(BitmapFactory().pixmap("qss:overlay/icons/close.svg"));
+        if (OverlayTabWidget::isOverlayChromeDark()) {
+            _actFloat.setIcon(BitmapFactory().pixmap("qss:overlay/icons/float_light.svg"));
+            _actOverlay.setIcon(BitmapFactory().pixmap("qss:overlay/icons/overlay_light.svg"));
+            _actClose.setIcon(BitmapFactory().pixmap("qss:overlay/icons/close_light.svg"));
+        }
+        else {
+            _actFloat.setIcon(BitmapFactory().pixmap("qss:overlay/icons/float.svg"));
+            _actOverlay.setIcon(BitmapFactory().pixmap("qss:overlay/icons/overlay.svg"));
+            _actClose.setIcon(BitmapFactory().pixmap("qss:overlay/icons/close.svg"));
+        }
         for (OverlayTabWidget* tabWidget : _Overlays) {
             tabWidget->refreshIcons();
             for (auto handle : tabWidget->findChildren<OverlaySplitterHandle*>()) {

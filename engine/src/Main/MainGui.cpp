@@ -199,7 +199,7 @@ int main(int argc, char** argv)
     // set the banner (for logging and console)
     App::Application::Config()["CopyrightInfo"] = sBanner;
     App::Application::Config()["AppIcon"] = "freecad";
-    App::Application::Config()["SplashScreen"] = "freecadsplash";
+    App::Application::Config()["SplashScreen"] = "linuxcadsplash";
     App::Application::Config()["AboutImage"] = App::Application::isDevelopmentVersion()
         ? "freecadaboutdev"
         : "freecadabout";
@@ -208,8 +208,8 @@ int main(int argc, char** argv)
     App::Application::Config()["SplashAlignment"] = "Bottom|Left";
     App::Application::Config()["SplashTextColor"] = "#418FDE";
     App::Application::Config()["SplashWarningColor"] = "#CA333B";
-    App::Application::Config()["SplashInfoColor"] = "#000000";
-    App::Application::Config()["SplashInfoPosition"] = "6,75";
+    App::Application::Config()["SplashInfoColor"] = "#98A2B3";
+    App::Application::Config()["SplashInfoPosition"] = "24,356";
     App::Application::Config()["DesktopFileName"] = "org.linuxcad.LinuxCAD";
 
     try {

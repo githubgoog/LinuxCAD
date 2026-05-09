@@ -15,13 +15,19 @@ namespace LinuxCAD {
 class GuiExport FirstRunWizard
 {
 public:
-    static constexpr const char kCompletedKey[] = "LinuxCAD/FirstRunWizardCompletedV1";
+    static constexpr const char* kCompletedKey = "LinuxCAD/FirstRunCompleted";
 
     /// If not yet completed, runs the wizard modally above {@p parent}.
     static void promptIfNeeded(QWidget* parent);
 
     /// Clears completion and opens the wizard (logo menu \"Re-run setup\").
     static void runAgain(QWidget* parent);
+
+    /// Apply sensible defaults on first launch without showing UI:
+    ///   theme=dark, units=metric, navigation=LinuxCAD, AI=mock+disabled.
+    /// Sets `LinuxCAD/FirstRunCompleted` so promptIfNeeded() and itself
+    /// become no-ops on subsequent launches.
+    static void applySilentDefaults();
 
 private:
     FirstRunWizard() = delete;

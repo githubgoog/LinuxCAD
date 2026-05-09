@@ -1,0 +1,87 @@
+/* LinuxCAD manifest-driven base theme template */
+
+QToolBar#LinuxCadTopBar[linuxcadRole="topbar"] {
+    background: {{bg_primary}};
+    border: none;
+    border-bottom: 1px solid {{border_subtle}};
+}
+
+QWidget#topbar-outer[linuxcadRole="topbar-outer"] { background: {{bg_primary}}; }
+QWidget#topbar-row1 { background: {{bg_primary}}; border-bottom: 1px solid {{bg_secondary}}; }
+QWidget#topbar-row2 { background: {{bg_secondary}}; }
+
+QLineEdit#cmd-search,
+QLineEdit[linuxcadRole="cmd-search"] {
+    background: {{bg_secondary}};
+    color: {{text_primary}};
+    border: 1px solid {{border_subtle}};
+    selection-background-color: {{accent}};
+    selection-color: {{selection_text}};
+}
+QLineEdit#cmd-search:focus,
+QLineEdit[linuxcadRole="cmd-search"]:focus {
+    border-color: {{accent}};
+}
+
+QToolButton[linuxcadRole="topbar-iconbtn"],
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"] {
+    color: {{text_primary}};
+    background: {{bg_secondary}};
+    border: 1px solid {{border_subtle}};
+}
+QToolButton[linuxcadRole="topbar-iconbtn"]:hover,
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"]:hover {
+    background: {{bg_hover}};
+    border-color: {{border_strong}};
+}
+QToolButton#workbench-dropdown[linuxcadRole="workbench-dropdown"]:pressed {
+    border-color: {{accent}};
+}
+
+QMenuBar {
+    background: {{bg_primary}};
+    color: {{text_primary}};
+    border-bottom: 1px solid {{border_subtle}};
+}
+QMenu {
+    background: {{bg_secondary}};
+    color: {{text_primary}};
+    border: 1px solid {{border_strong}};
+}
+QMenu::item:selected {
+    background: {{bg_hover}};
+    border-left: 2px solid {{accent}};
+}
+QMenu::item:disabled { color: {{text_dim}}; }
+
+QDockWidget::title {
+    background: {{bg_primary}};
+    color: {{text_primary}};
+    border-bottom: 1px solid {{border_subtle}};
+}
+
+QDockWidget[linuxcadRole="tree-dock"],
+QDockWidget[linuxcadRole="props-dock"],
+QDockWidget[linuxcadRole="report-dock"] {
+    background: {{bg_primary}};
+    color: {{text_primary}};
+}
+
+QToolButton[linuxcadRole="ai-status"] {
+    color: {{text_primary}};
+    background: {{bg_secondary}};
+    border: 1px solid {{border_strong}};
+}
+QToolButton[linuxcadRole="ai-status"][state="idle"] { color: {{ai_idle}}; }
+QToolButton[linuxcadRole="ai-status"][state="thinking"] { color: {{ai_thinking}}; border-color: {{accent}}; }
+QToolButton[linuxcadRole="ai-status"][state="error"] { color: {{ai_error}}; }
+QToolButton[linuxcadRole="ai-status"][state="disabled"] {
+    color: {{ai_disabled}};
+    background: {{bg_primary}};
+    border-color: {{border_subtle}};
+}
+
+QScrollBar:vertical, QScrollBar:horizontal { background: {{scrollbar_bg}}; }
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal { background: {{scrollbar_thumb}}; }
+QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover { background: {{accent_hover}}; }
+QScrollBar::handle:vertical:pressed, QScrollBar::handle:horizontal:pressed { background: {{accent_pressed}}; }

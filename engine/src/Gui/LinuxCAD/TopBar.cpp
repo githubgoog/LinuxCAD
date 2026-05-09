@@ -10,9 +10,11 @@
 #include <QKeySequence>
 #include <QLineEdit>
 #include <QMenu>
+#include <QPainter>
 #include <QPixmap>
 #include <QSettings>
 #include <QShortcut>
+#include <QSvgRenderer>
 #include <QSize>
 #include <QSizePolicy>
 #include <QStyle>
@@ -33,10 +35,85 @@
 #include "CommandPalette.h"
 #include "FirstRunWizard.h"
 #include "LinuxCadShell.h"
-#include "ProjectManager.h"
 #include "Ribbon.h"
+#include "Theme.h"
+#include "ThemePicker.h"
 #include "TopBar.h"
 #include "WorkbenchDropdownButton.h"
+
+#include <algorithm>
+#include <string>
+
+namespace {
+QPixmap loadLinuxCadWordmarkPixmap()
+{
+    constexpr int targetH = 28;
+    const QString path = QStringLiteral(":/linuxcad/branding/wordmark.svg");
+    QSvgRenderer renderer(path);
+    if (renderer.isValid()) {
+        const QSize def = renderer.defaultSize();
+        if (def.height() > 0 && def.width() > 0) {
+            const qreal scale = static_cast<qreal>(targetH) / static_cast<qreal>(def.height());
+            const int w = qMax(1, static_cast<int>((def.width() * scale) + 0.5));
+            QPixmap pm(w, targetH);
+            pm.fill(Qt::transparent);
+            QPainter p(&pm);
+            renderer.render(&p, QRectF(0, 0, w, static_cast<qreal>(targetH)));
+            if (!pm.isNull()) {
+                return pm;
+            }
+        }
+    }
+
+    QPixmap png(QStringLiteral(":/linuxcad/branding/wordmark.png"));
+    if (!png.isNull()) {
+        return png.scaledToHeight(targetH, Qt::SmoothTransformation);
+    }
+
+    return {};
+}
+
+void populateRecentFilesMenu(QMenu* parent)
+{
+    if (parent == nullptr) {
+        return;
+    }
+
+    QStringList recents;
+    try {
+        auto group = App::GetApplication().GetParameterGroupByPath(
+            "User parameter:BaseApp/Preferences/RecentFiles");
+        const int count = group->GetInt("RecentFiles", 0);
+        for (int i = 0; i < std::min(count, 10); ++i) {
+            const std::string key = "MRU" + std::to_string(i);
+            const std::string val = group->GetASCII(key.c_str(), "");
+            if (!val.empty()) {
+                recents.append(QString::fromStdString(val));
+            }
+        }
+    }
+    catch (...) {
+        // Defensive: if the recent-files store is missing, show placeholder.
+    }
+
+    if (recents.isEmpty()) {
+        auto* none = parent->addAction(QObject::tr("(no recent files)"));
+        none->setEnabled(false);
+        return;
+    }
+
+    for (const QString& path : recents) {
+        parent->addAction(path, [path] {
+            try {
+                App::GetApplication().openDocument(path.toUtf8().constData());
+            }
+            catch (...) {
+                // Defensive: ignore open errors and let the user retry.
+            }
+        });
+    }
+}
+} // namespace
 
 namespace Gui {
 namespace LinuxCAD {
@@ -104,18 +181,21 @@ void TopBar::buildLayout()
     logoButton_->setAutoRaise(true);
     logoButton_->setToolTip(tr("LinuxCAD - project actions"));
     {
-        const QPixmap wordmark(QStringLiteral(":/linuxcad/branding/wordmark.svg"));
+        const QPixmap wordmark = loadLinuxCadWordmarkPixmap();
         if (!wordmark.isNull()) {
             logoButton_->setIcon(QIcon(wordmark));
-            logoButton_->setIconSize(QSize(120, 28));
+            logoButton_->setIconSize(QSize(wordmark.width(), wordmark.height()));
+            logoButton_->setToolButtonStyle(Qt::ToolButtonIconOnly);
         }
         else {
             logoButton_->setText(tr("LinuxCAD"));
+            logoButton_->setToolButtonStyle(Qt::ToolButtonTextOnly);
         }
     }
-    logoButton_->setToolButtonStyle(Qt::ToolButtonIconOnly);
     buildLogoMenu();
-    row1Layout->addWidget(logoButton_);
+    // Keep logo actions available internally, but do not keep a permanent
+    // brand button in the chrome per UX direction.
+    logoButton_->setVisible(false);
 
     // --- Workbench dropdown ---------------------------------------------
     workbenchDropdown_ = new WorkbenchDropdownButton(row1_);
@@ -133,8 +213,37 @@ void TopBar::buildLayout()
     connect(quickSearch_, &QLineEdit::returnPressed, this, &TopBar::onCommandPaletteRequested);
 
     // --- Palette button -------------------------------------------------
-    paletteButton_ = makeIconButton("command", tr("Open command palette (Ctrl+K)"),
-                                    SLOT(onCommandPaletteRequested()));
+    // Prefer Svg loading so we never hit BitmapFactoryInst::pixmap's missing-key
+    // warning if the pixmap cache path fails inside AppImage/Linux themes.
+    paletteButton_ = new QToolButton(row1_);
+    paletteButton_->setToolTip(tr("Open command palette (Ctrl+K)"));
+    paletteButton_->setAutoRaise(true);
+    paletteButton_->setProperty("linuxcadRole", QStringLiteral("topbar-iconbtn"));
+    connect(paletteButton_, SIGNAL(clicked()), this, SLOT(onCommandPaletteRequested()));
+    {
+        auto pmSvg = Gui::BitmapFactory().pixmapFromSvg("preferences-system", QSizeF(18.F, 18.F));
+        if (!pmSvg.isNull()) {
+            paletteButton_->setIcon(QIcon(pmSvg));
+        }
+        else {
+            const auto pmBmp = Gui::BitmapFactory().pixmap("preferences-system");
+            if (!pmBmp.isNull()) {
+                paletteButton_->setIcon(QIcon(pmBmp));
+            }
+        }
+        if (paletteButton_->icon().isNull()) {
+            const QIcon fromTheme =
+                QIcon::fromTheme(QStringLiteral("preferences-system-symbolic"),
+                                 QIcon::fromTheme(QStringLiteral("preferences-system"),
+                                                  QIcon::fromTheme(QStringLiteral("system-search"))));
+            if (!fromTheme.isNull()) {
+                paletteButton_->setIcon(fromTheme);
+            }
+        }
+        if (paletteButton_->icon().isNull() && paletteButton_->style()) {
+            paletteButton_->setIcon(paletteButton_->style()->standardIcon(QStyle::SP_FileDialogContentsView));
+        }
+    }
     row1Layout->addWidget(paletteButton_);
 
     // --- Spacer pushes right-side cluster to the end -------------------
@@ -165,6 +274,29 @@ void TopBar::buildLayout()
     userButton_->setObjectName(QStringLiteral("topbar-user"));
     userButton_->setPopupMode(QToolButton::InstantPopup);
     auto* userMenu = new QMenu(userButton_);
+    userMenu->addAction(tr("Re-run setup wizard…"), [] {
+        QWidget* mw = Gui::getMainWindow();
+        if (Shell::instance() && Shell::instance()->mainWindow()) {
+            mw = Shell::instance()->mainWindow();
+        }
+        FirstRunWizard::runAgain(mw);
+    });
+    userMenu->addAction(tr("Themes…"), [] {
+        QWidget* mw = Gui::getMainWindow();
+        if (Shell::instance() && Shell::instance()->mainWindow()) {
+            mw = Shell::instance()->mainWindow();
+        }
+
+        ThemePicker dlg(mw);
+        QObject::connect(&dlg, &ThemePicker::themeChosen, &dlg, [](const QString& id) {
+            if (auto* sh = Shell::instance(); sh && sh->theme()) {
+                sh->theme()->applyTheme(id);
+                refreshDockChromeTint();
+            }
+        });
+        dlg.exec();
+    });
+    userMenu->addSeparator();
     userMenu->addAction(tr("Keyboard shortcuts (Ctrl+/)"), [] {
         if (auto* sh = Shell::instance(); sh && sh->commandPalette()) {
             sh->commandPalette()->showPalette(QStringLiteral("?"));
@@ -227,59 +359,49 @@ void TopBar::buildLogoMenu()
         }
         FirstRunWizard::runAgain(mw);
     });
+    menu->addAction(tr("Themes…"), [] {
+        QWidget* mw = Gui::getMainWindow();
+        if (Shell::instance() && Shell::instance()->mainWindow()) {
+            mw = Shell::instance()->mainWindow();
+        }
+
+        ThemePicker dlg(mw);
+        QObject::connect(&dlg, &ThemePicker::themeChosen, &dlg, [](const QString& id) {
+            if (auto* sh = Shell::instance(); sh && sh->theme()) {
+                sh->theme()->applyTheme(id);
+                refreshDockChromeTint();
+            }
+        });
+        dlg.exec();
+    });
 
     menu->addSeparator();
 
-    menu->addAction(tr("New Sketch... (S)"), [this] {
-        if (auto* sh = Shell::instance()) {
-            sh->newSketchInteractive();
-        }
-    });
+    menu->addAction(tr("New"),
+                    [runFreeCADCommand] { runFreeCADCommand("Std_New"); },
+                    QKeySequence::New);
 
-    menu->addAction(tr("New Project..."), [this] {
-        if (auto* pm = Shell::instance() ? Shell::instance()->projectManager() : nullptr) {
-            pm->newProjectInteractive(parentWidget());
-        }
-    }, QKeySequence::New);
-
-    menu->addAction(tr("Open Project..."), [this] {
-        if (auto* pm = Shell::instance() ? Shell::instance()->projectManager() : nullptr) {
-            pm->openProjectInteractive(parentWidget());
-        }
-    }, QKeySequence::Open);
+    menu->addAction(tr("Open…"),
+                    [runFreeCADCommand] { runFreeCADCommand("Std_Open"); },
+                    QKeySequence::Open);
 
     auto* recentMenu = menu->addMenu(tr("Open Recent"));
-    if (auto* pm = Shell::instance() ? Shell::instance()->projectManager() : nullptr) {
-        const auto recents = pm->recentProjects();
-        if (recents.isEmpty()) {
-            auto* none = recentMenu->addAction(tr("(no recent projects)"));
-            none->setEnabled(false);
-        }
-        for (const auto& path : recents) {
-            recentMenu->addAction(path, [pm, path] { pm->openProject(path); });
-        }
-    }
+    populateRecentFilesMenu(recentMenu);
 
     menu->addSeparator();
 
     menu->addAction(tr("Save"),       [runFreeCADCommand] { runFreeCADCommand("Std_Save"); },
                     QKeySequence::Save);
-    menu->addAction(tr("Save As..."), [runFreeCADCommand] { runFreeCADCommand("Std_SaveAs"); },
+    menu->addAction(tr("Save As…"),   [runFreeCADCommand] { runFreeCADCommand("Std_SaveAs"); },
                     QKeySequence::SaveAs);
     menu->addAction(tr("Save All"),   [runFreeCADCommand] { runFreeCADCommand("Std_SaveAll"); });
+    menu->addAction(tr("Close"),      [runFreeCADCommand] { runFreeCADCommand("Std_CloseActiveWindow"); },
+                    QKeySequence::Close);
 
     menu->addSeparator();
 
-    menu->addAction(tr("Import..."), [runFreeCADCommand] { runFreeCADCommand("Std_Import"); });
-    menu->addAction(tr("Export..."), [runFreeCADCommand] { runFreeCADCommand("Std_Export"); });
-
-    menu->addSeparator();
-
-    menu->addAction(tr("Close Project"), [this] {
-        if (auto* pm = Shell::instance() ? Shell::instance()->projectManager() : nullptr) {
-            pm->closeProject();
-        }
-    });
+    menu->addAction(tr("Import…"), [runFreeCADCommand] { runFreeCADCommand("Std_Import"); });
+    menu->addAction(tr("Export…"), [runFreeCADCommand] { runFreeCADCommand("Std_Export"); });
 
     logoButton_->setMenu(menu);
 }

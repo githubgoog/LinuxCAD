@@ -2,6 +2,13 @@
     <qresource prefix="/linuxcad">
         <file>themes/dark.qss</file>
         <file>themes/light.qss</file>
+        <file>themes/charcoal-amber.theme.toml</file>
+        <file>themes/light-amber.theme.toml</file>
+        <file>themes/system.theme.toml</file>
+        <file>themes/base.qss.tmpl</file>
         <file alias="branding/wordmark.svg">branding/wordmark.svg</file>
+        <file alias="branding/glyph.svg">branding/glyph.svg</file>
+        <file alias="branding/mark.svg">branding/glyph.svg</file>
+        <file alias="branding/wordmark.png">branding/wordmark.png</file>
     </qresource>
 </RCC>

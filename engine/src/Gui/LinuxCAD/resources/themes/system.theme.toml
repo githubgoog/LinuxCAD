@@ -1,0 +1,11 @@
+[theme]
+name        = "System"
+id          = "system"
+author      = "LinuxCAD"
+description = "Use the host platform's native style; no LinuxCAD QSS applied."
+font_family = ""
+
+[colors]
+# All keys empty signals to the loader: skip QSS substitution and apply nothing.
+
+extra_qss = ""

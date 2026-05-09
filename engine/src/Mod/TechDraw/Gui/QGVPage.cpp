@@ -105,7 +105,7 @@ public:
         const ParameterGrp& rGrp = static_cast<ParameterGrp&>(rCaller);
         if (strcmp(Reason, "NavigationStyle") == 0) {
             std::string model =
-                rGrp.GetASCII("NavigationStyle", CADNavigationStyle::getClassTypeId().getName());
+                rGrp.GetASCII("NavigationStyle", LinuxCadNavigationStyle::getClassTypeId().getName());
             page->setNavigationStyle(model);
         }
         else if (strcmp(Reason, "InvertZoom") == 0) {
