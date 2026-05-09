@@ -175,10 +175,7 @@ freecad-stubs = "*"
 
 [tasks]
 # Use system git here: conda-forge git in the Pixi env is often "minimal-git" without `git submodule`.
-initialize = {
-    cmd    = ["/usr/bin/git", "submodule", "update", "--init", "--recursive"],
-    cwd    = "engine",
-}
+initialize = { cmd = ["/usr/bin/git", "submodule", "update", "--init", "--recursive"], cwd = "engine" }
 apply-branding = { cmd = ["bash", "branding/apply-branding.sh"] }
 validate-build-path = { cmd = ["bash", "scripts/validate-build-path.sh"], cwd = "." }
 build-release = { cmd = ["cmake", "--build", "build/release", "--config", "Release"], cwd = "engine" }
