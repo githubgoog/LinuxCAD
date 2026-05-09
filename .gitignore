@@ -42,6 +42,7 @@ __pycache__/
 *.pyd
 
 # IDE and Editor
+.cursor/
 .vscode/
 .idea/
 *.swp

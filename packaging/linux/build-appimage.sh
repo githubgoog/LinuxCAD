@@ -23,6 +23,11 @@ ARCH="${LINUXCAD_ARCH:-$(uname -m)}"
 case "$ARCH" in
     amd64) ARCH=x86_64 ;;
     arm64) ARCH=aarch64 ;;
+    x86_64|aarch64) ;;
+    *)
+        echo "Unsupported LINUXCAD_ARCH='$ARCH'. Expected x86_64 or aarch64 (or amd64/arm64 aliases)." >&2
+        exit 1
+        ;;
 esac
 
 if [ ! -x "$INSTALL_DIR/bin/FreeCAD" ]; then
@@ -37,7 +42,9 @@ rm -rf "$APPDIR"
 mkdir -p "$APPDIR/usr"
 
 # Stage the pixi env's relevant subtrees into the AppDir.
-for sub in bin lib share include; do
+# NOTE: Mod is required for built-in workbenches; without it the app starts
+# with no workbenches/modules.
+for sub in bin lib share include Mod Ext; do
     if [ -d "$INSTALL_DIR/$sub" ]; then
         mkdir -p "$APPDIR/usr/$sub"
         cp -a "$INSTALL_DIR/$sub/." "$APPDIR/usr/$sub/"
@@ -47,9 +54,12 @@ done
 # PySide6 can include Qt3D Python extension modules that depend on libQt63D*.so.
 # Our runtime does not ship Qt3D and LinuxCAD does not use those modules, so keep
 # packaging deterministic by pruning them before linuxdeploy dependency scanning.
-if [ -d "$APPDIR/usr/lib/python3.11/site-packages/PySide6" ]; then
-    rm -f "$APPDIR/usr/lib/python3.11/site-packages/PySide6"/Qt3D*.so
-fi
+# Use a glob over python3.* so this keeps working when pixi bumps the Python minor.
+shopt -s nullglob
+for pyside_dir in "$APPDIR/usr/lib/python3."*/site-packages/PySide6; do
+    rm -f "$pyside_dir"/Qt3D*.so
+done
+shopt -u nullglob
 
 # LinuxCAD wrapper around bin/FreeCAD — keeps the engine binary name intact
 # but exposes "LinuxCAD" as the user-visible entry point.
@@ -70,19 +80,41 @@ GenericName=Computer-Aided Design
 Comment=Friendly CAD powered by FreeCAD's engine
 Exec=LinuxCAD %F
 Icon=org.linuxcad.LinuxCAD
-Categories=Graphics;Engineering;3DGraphics;Science;
-MimeType=application/x-extension-fcstd;application/x-extension-lcadproj;
+Categories=Graphics;Engineering;3DGraphics;
+MimeType=application/x-extension-fcstd;
 StartupNotify=true
 Terminal=false
 EOF
 cp "$APPDIR/usr/share/applications/org.linuxcad.LinuxCAD.desktop" \
    "$APPDIR/org.linuxcad.LinuxCAD.desktop"
 
-mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
-ICON_DST="$APPDIR/usr/share/icons/hicolor/256x256/apps/org.linuxcad.LinuxCAD.png"
-if [ -f "$ROOT/branding/icons/linuxcad-256.png" ]; then
-    cp "$ROOT/branding/icons/linuxcad-256.png" "$ICON_DST"
-else
+if command -v desktop-file-validate >/dev/null 2>&1; then
+    desktop-file-validate "$APPDIR/usr/share/applications/org.linuxcad.LinuxCAD.desktop" \
+        || echo "warning: desktop-file-validate reported issues (continuing)" >&2
+fi
+
+# Stage every available LinuxCAD PNG size into the AppImage's hicolor tree so
+# launchers, panels, and HiDPI shells all pick up LinuxCAD branding (not the
+# upstream FreeCAD icon that comes along inside share/icons/hicolor via the
+# pixi env copy above).
+ICON_DST_256="$APPDIR/usr/share/icons/hicolor/256x256/apps/org.linuxcad.LinuxCAD.png"
+staged_any_icon=0
+largest_staged=""
+for size in 16 32 48 64 128 256 512; do
+    src="$ROOT/branding/icons/linuxcad-${size}.png"
+    if [ -f "$src" ]; then
+        dst_dir="$APPDIR/usr/share/icons/hicolor/${size}x${size}/apps"
+        mkdir -p "$dst_dir"
+        cp "$src" "$dst_dir/org.linuxcad.LinuxCAD.png"
+        staged_any_icon=1
+        largest_staged="$dst_dir/org.linuxcad.LinuxCAD.png"
+    fi
+done
+
+if [ "$staged_any_icon" = "0" ]; then
+    echo "warning: no branding/icons/linuxcad-<size>.png found; falling back to FreeCAD icon." >&2
+    echo "         Run branding/icons/build-icons.sh to render LinuxCAD PNGs from SVG." >&2
+    mkdir -p "$(dirname "$ICON_DST_256")"
     for candidate in \
         "$INSTALL_DIR/share/icons/hicolor/256x256/apps/org.freecad.FreeCAD.png" \
         "$INSTALL_DIR/share/icons/hicolor/64x64/apps/org.freecad.FreeCAD.png" \
@@ -90,14 +122,24 @@ else
         "$INSTALL_DIR/share/icons/hicolor/32x32/apps/org.freecad.FreeCAD.png" \
         "$INSTALL_DIR/share/icons/hicolor/16x16/apps/org.freecad.FreeCAD.png"; do
         if [ -f "$candidate" ]; then
-            cp "$candidate" "$ICON_DST"
+            cp "$candidate" "$ICON_DST_256"
+            largest_staged="$ICON_DST_256"
             break
         fi
     done
 fi
-if [ -f "$ICON_DST" ]; then
-    cp "$ICON_DST" "$APPDIR/org.linuxcad.LinuxCAD.png"
-    cp "$ICON_DST" "$APPDIR/.DirIcon"
+
+# AppImage spec wants org.<id>.png and .DirIcon at the AppDir root. Prefer the
+# 256 variant if we have it; otherwise use whatever largest size we did stage.
+appdir_root_icon=""
+if [ -f "$ICON_DST_256" ]; then
+    appdir_root_icon="$ICON_DST_256"
+elif [ -n "$largest_staged" ] && [ -f "$largest_staged" ]; then
+    appdir_root_icon="$largest_staged"
+fi
+if [ -n "$appdir_root_icon" ]; then
+    cp "$appdir_root_icon" "$APPDIR/org.linuxcad.LinuxCAD.png"
+    cp "$appdir_root_icon" "$APPDIR/.DirIcon"
 fi
 
 cat > "$APPDIR/AppRun" <<'APPRUN'
@@ -106,7 +148,7 @@ HERE="$(dirname "$(readlink -f "$0")")"
 export PATH="$HERE/usr/bin:$PATH"
 export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/lib/freecad-python3:${LD_LIBRARY_PATH:-}"
 export QT_PLUGIN_PATH="$HERE/usr/lib/qt6/plugins:${QT_PLUGIN_PATH:-}"
-export PYTHONHOME=""
+unset PYTHONHOME
 exec "$HERE/usr/bin/LinuxCAD" "$@"
 APPRUN
 chmod +x "$APPDIR/AppRun"

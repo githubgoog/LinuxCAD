@@ -34,6 +34,32 @@ void invokeFreeCADCommand(const char* name)
     }
 }
 
+// BitmapFactory::pixmap() resolves icon-*resource* names. FreeCAD command
+// names (e.g. "Std_ViewIsometric") are not generally registered as resource
+// names, so passing them directly produces "Cannot find icon" warnings even
+// for valid commands. Resolve via the command's declared pixmap name instead,
+// which is the actual resource key. Returns a null pixmap silently when the
+// command (or its declared pixmap) is unavailable.
+QPixmap pixmapForCommand(const char* commandName)
+{
+    if (commandName == nullptr) {
+        return {};
+    }
+    auto* app = Gui::Application::Instance;
+    if (app == nullptr) {
+        return {};
+    }
+    auto* cmd = app->commandManager().getCommandByName(commandName);
+    if (cmd == nullptr) {
+        return {};
+    }
+    const char* pix = cmd->getPixmap();
+    if (pix == nullptr || *pix == '\0') {
+        return {};
+    }
+    return Gui::BitmapFactory().pixmap(pix);
+}
+
 bool isOrthographicNow()
 {
     auto* mdi = Gui::getMainWindow() ? Gui::getMainWindow()->activeWindow() : nullptr;
@@ -124,7 +150,7 @@ QToolButton* ViewClusterWidget::makeButton(const QString& label,
     btn->setFocusPolicy(Qt::NoFocus);
     btn->setToolButtonStyle(Qt::ToolButtonTextOnly);
     if (iconHint != nullptr) {
-        const QPixmap icon = Gui::BitmapFactory().pixmap(iconHint);
+        const QPixmap icon = pixmapForCommand(iconHint);
         if (!icon.isNull()) {
             btn->setIcon(QIcon(icon));
             btn->setIconSize(QSize(16, 16));

@@ -327,8 +327,8 @@ Comment=Friendly CAD powered by the FreeCAD engine
 Exec=$LAUNCHER %F
 TryExec=$LAUNCHER
 Icon=linuxcad
-Categories=Graphics;Engineering;3DGraphics;Science;
-MimeType=application/x-extension-fcstd;application/x-extension-lcadproj;
+Categories=Graphics;Engineering;3DGraphics;
+MimeType=application/x-extension-fcstd;
 StartupNotify=true
 Terminal=false
 EOF
