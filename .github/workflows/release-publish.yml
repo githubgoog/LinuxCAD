@@ -96,7 +96,37 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN: 1
         run: pixi run ${{ matrix.package_task }}
 
+      # Windows-specific runtime smoke test. The previous build-zip.ps1 only
+      # staged the conda Library/ subtree, missing the Python interpreter and
+      # Lib/site-packages — so the zip would extract cleanly but FreeCAD would
+      # fail to import Python at startup. Verify by running FreeCADCmd against
+      # the freshly built zip; if Python isn't wired correctly, the workflow
+      # fails before publishing.
+      - name: Smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $zip = Get-ChildItem -Path dist -Filter "LinuxCAD-for-Windows-*.zip" -File | Select-Object -First 1
+          if (-not $zip) { throw "No Windows zip found in dist/" }
+          $extract = Join-Path $env:RUNNER_TEMP "linuxcad-smoke"
+          if (Test-Path $extract) { Remove-Item -Recurse -Force $extract }
+          Expand-Archive -Path $zip.FullName -DestinationPath $extract
+          $exe = Join-Path $extract "bin/FreeCADCmd.exe"
+          if (-not (Test-Path $exe)) { throw "FreeCADCmd.exe missing from staged zip at $exe" }
+          Write-Host "Running $exe -c 'import sys; print(...)'"
+          $output = & $exe -c "import sys; print('SMOKE_OK_PYTHON', sys.version)" 2>&1 | Out-String
+          Write-Host "FreeCADCmd output:`n$output"
+          if ($LASTEXITCODE -ne 0) {
+              throw "FreeCADCmd exited $LASTEXITCODE during smoke test"
+          }
+          if ($output -notmatch "SMOKE_OK_PYTHON") {
+              throw "Smoke test output missing SMOKE_OK_PYTHON marker; Python not wired correctly"
+          }
+
       - name: Upload artifact
+        # Upload even on smoke-test failure so we can inspect what was built.
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.product }}
