@@ -32,11 +32,11 @@ jobs:
             shell: bash
             arch: arm64
             package_task: package
-          - product: LinuxCAD-for-macOS-x86_64
-            os: macos-13
-            shell: bash
-            arch: x86_64
-            package_task: package
+          # macOS-x86_64 (macos-13) was dropped after v1.1.4: GitHub-hosted Intel
+          # Mac runners are scarce on free-tier accounts and routinely sit in queue
+          # for 19+ hours, blocking the publish job. Apple has EOL'd Intel Macs.
+          # If you specifically need an Intel Mac build, reintroduce this entry
+          # and accept the queue-time risk.
           - product: LinuxCAD-for-Windows
             os: windows-2022
             shell: pwsh
@@ -44,7 +44,11 @@ jobs:
             package_task: package
 
     env:
-      LINUXCAD_VERSION: ${{ github.ref_name }}
+      # On tag pushes github.ref_name is the tag (e.g. "v1.1.4"). On
+      # workflow_dispatch against a branch it'd be the branch name with slashes,
+      # which broke the AppImage/DMG output filename. Honour inputs.tag when
+      # dispatched.
+      LINUXCAD_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
       LINUXCAD_ARCH: ${{ matrix.arch }}
 
     defaults:
@@ -162,7 +166,7 @@ jobs:
               ("linux_x86_64",  r"^LinuxCAD-for-Linux-.*-x86_64\.AppImage$",      "LinuxCAD for Linux (x86_64)"),
               ("linux_aarch64", r"^LinuxCAD-for-Linux-.*-aarch64\.AppImage$",     "LinuxCAD for Linux (aarch64)"),
               ("macos_arm64",   r"^LinuxCAD-for-macOS-.*-arm64\.dmg$",            "LinuxCAD for macOS (Apple Silicon)"),
-              ("macos_x86_64",  r"^LinuxCAD-for-macOS-.*-x86_64\.dmg$",           "LinuxCAD for macOS (Intel)"),
+              # macos_x86_64 intentionally omitted; Intel Mac runners were dropped from the matrix.
               ("windows_x64",   r"^LinuxCAD-for-Windows-.*-x64\.zip$",            "LinuxCAD for Windows (x64)"),
           ]
           for key, pattern, label in mapping:
